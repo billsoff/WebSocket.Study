@@ -44,6 +44,11 @@ namespace WebSocketServer.Demo2
                 byte[] encoded = Encoding.UTF8.GetBytes(response);
 
                 await socket.SendAsync(new ArraySegment<byte>(encoded), WebSocketMessageType.Text, true, CancellationToken.None);
+
+                if (socket.State != WebSocketState.Open)
+                {
+                    break;
+                }
             }
         }
     }
