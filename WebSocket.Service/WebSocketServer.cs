@@ -17,13 +17,13 @@ namespace WebSocketService
         private readonly IJobInitializer<TJob> _jobInitializer;
 
         public WebSocketServer(string listeningAddress)
-            : this(listeningAddress, new SimpleJobInitializer<TJob>())
+            : this(listeningAddress, null)
         {
         }
 
         public WebSocketServer(string listeningAddress, IJobInitializer<TJob> jobInitializer)
         {
-            _jobInitializer = jobInitializer ?? new SimpleJobInitializer<TJob>();
+            _jobInitializer = jobInitializer;
 
             _listener = new HttpListener();
             _listener.Prefixes.Add(listeningAddress);
@@ -82,7 +82,7 @@ namespace WebSocketService
                     SocketContext = socketContext,
                 };
 
-                _jobInitializer.Initialize(job);
+                _jobInitializer?.Initialize(job);
                 _jobRepository.Register(job);
 
                 try
@@ -100,16 +100,6 @@ namespace WebSocketService
                 {
                     _jobRepository.Unregister(job);
                 }
-            }
-        }
-
-
-        private sealed class SimpleJobInitializer<TJobInner> : IJobInitializer<TJobInner>
-            where TJobInner : Job, new()
-        {
-            public void Initialize(TJobInner job)
-            {
-                // no op
             }
         }
     }
