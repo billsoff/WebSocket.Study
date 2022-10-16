@@ -9,6 +9,7 @@ namespace WebSocketService
     public abstract class Job : IJob
     {
         private readonly ArraySegment<byte> _buffer = new ArraySegment<byte>(new byte[1024 * 1024]); // 1M
+        private JobExecutionStep _executionStep;
 
         internal WebSocketContext SocketContext { get; set; }
 
@@ -33,6 +34,7 @@ namespace WebSocketService
                     break;
                 }
             }
+
 
             return DeterminePolicyOnCompletion();
         }
@@ -61,6 +63,21 @@ namespace WebSocketService
 
         internal async Task Terminate()
         {
+            if (_executionStep != JobExecutionStep.Complete)
+            {
+                const int WAIT_MAX_SECONDS = 20;
+
+                for (int i = 0; i < WAIT_MAX_SECONDS; i++)
+                {
+                    await Task.Delay(1000); // 1s
+
+                    if (_executionStep == JobExecutionStep.Complete)
+                    {
+                        break;
+                    }
+                }
+            }
+
             await Socket.CloseAsync(
                     WebSocketCloseStatus.NormalClosure,
                     null,
