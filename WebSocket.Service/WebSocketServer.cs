@@ -57,6 +57,11 @@ namespace WebSocketService
         {
             while (true)
             {
+                if (socketContext.WebSocket.State != WebSocketState.Open)
+                {
+                    return;
+                }
+
                 TJob job = new TJob()
                 {
                     SocketContext = socketContext,
