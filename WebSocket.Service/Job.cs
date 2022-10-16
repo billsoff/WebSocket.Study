@@ -27,7 +27,7 @@ namespace WebSocketService
                     return JobPolicyOnCompletion.ContinueNextJob;
                 }
 
-                JobExecutionStep _executionStep = await Execute();
+                _executionStep = await Execute();
 
                 if (_executionStep == JobExecutionStep.Complete)
                 {
