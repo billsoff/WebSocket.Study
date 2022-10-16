@@ -3,4 +3,13 @@
 ## Task
   - [x] Gracefully close web socket
   - [ ] Initialize Job
-  - [ ] Is there event with close prompt window?　NG
+  - [x] Is there event with close prompt window?　NG
+
+## Printing Command Schema
+
+```js
+  {
+    command: string,
+    data: string,
+  }
+```
