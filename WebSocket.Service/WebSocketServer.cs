@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 
 namespace WebSocketService
 {
-    public sealed class WebSocketServer<TJob>
+    public sealed class WebSocketServer<TJob> : IDisposable
         where TJob : Job, new()
     {
         private readonly HttpListener _listener;
@@ -51,6 +52,11 @@ namespace WebSocketService
             Task.WaitAll(tasks.ToArray());
 
             _listener.Stop();
+        }
+
+        public void Dispose()
+        {
+            Stop();
         }
 
         private async Task AcceptJob(WebSocketContext socketContext)

@@ -8,33 +8,32 @@ namespace WebSocketService.Test
     {
         static void Main(string[] args)
         {
-            WebSocketServer<EchoJob> server = new WebSocketServer<EchoJob>("http://127.0.0.1:8089/");
-
-            Task _ = server.Start();
-
-            Console.WriteLine("Start web socket at http://127.0.0.1:8089/");
-
-            Console.WriteLine("Enter exit to stop the server");
-
-            while (true)
+            using (WebSocketServer<EchoJob> server = new WebSocketServer<EchoJob>("http://127.0.0.1:8089/"))
             {
-                string line = Console.ReadLine();
+                Task _ = server.Start();
 
-                if (string.Equals(line, "exit", StringComparison.OrdinalIgnoreCase))
+                Console.WriteLine("Start web socket at http://127.0.0.1:8089/");
+
+                Console.WriteLine("Enter exit to stop the server");
+
+                while (true)
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("Start exiting, please wait a while...");
+                    string line = Console.ReadLine();
 
-                    server.Stop();
+                    if (string.Equals(line, "exit", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Start exiting, please wait a while...");
 
-                    Console.WriteLine("Exited.");
-                    Console.WriteLine();
+                        break;
+                    }
 
-                    break;
+                    Thread.Sleep(2000);
                 }
-
-                Thread.Sleep(2000);
             }
+
+            Console.WriteLine("Exited.");
+            Console.WriteLine();
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey(true);
