@@ -10,6 +10,10 @@ namespace WebSocketService
     {
         private readonly ArraySegment<byte> _buffer = new ArraySegment<byte>(new byte[1024 * 1024]); // 1M
 
+        internal WebSocketContext SocketContext { get; set; }
+
+        private WebSocket Socket { get => SocketContext.WebSocket; }
+
         internal async Task<JobPolicyOnCompletion> Run()
         {
             while (true)
@@ -33,11 +37,15 @@ namespace WebSocketService
             return DeterminePolicyOnCompletion();
         }
 
+        #region Job
+
         public abstract bool Recognize(string message);
 
         public abstract Task<JobExecutionStep> Execute();
 
         public abstract JobPolicyOnCompletion DeterminePolicyOnCompletion();
+
+        #endregion
 
         protected async Task SendAsync(string message)
         {
@@ -51,9 +59,14 @@ namespace WebSocketService
                 );
         }
 
-        internal WebSocketContext SocketContext { get; set; }
-
-        private WebSocket Socket { get => SocketContext.WebSocket; }
+        internal async Task Terminate()
+        {
+            await Socket.CloseAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    null,
+                    CancellationToken.None
+                );
+        }
 
         private async Task<string> ReceiveAsync()
         {

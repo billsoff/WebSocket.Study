@@ -22,13 +22,22 @@ namespace WebSocketService.Test
 
                 if (string.Equals(line, "exit", StringComparison.OrdinalIgnoreCase))
                 {
+                    Console.WriteLine();
+                    Console.WriteLine("Start exiting, please wait a while...");
+
                     server.Stop();
+
+                    Console.WriteLine("Exited.");
+                    Console.WriteLine();
 
                     break;
                 }
 
                 Thread.Sleep(2000);
             }
+
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey(true);
         }
     }
 }

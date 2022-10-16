@@ -9,6 +9,11 @@ namespace WebSocketService.Test
 
         public override bool Recognize(string message)
         {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return false;
+            }
+
             Console.WriteLine(message);
             _message = message;
 

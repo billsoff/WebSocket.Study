@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Net;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 
@@ -8,6 +9,9 @@ namespace WebSocketService
         where TJob : Job, new()
     {
         private readonly HttpListener _listener;
+
+        private readonly JobRepository _jobRepository = new JobRepository();
+        private volatile bool _terminate;
 
         public WebSocketServer(string listeningAddress)
         {
@@ -25,14 +29,29 @@ namespace WebSocketService
                 WebSocketContext socketContext = await listenerContext.AcceptWebSocketAsync(null);
 
                 Task _ = AcceptJob(socketContext);
+
+                if (_terminate)
+                {
+                    break;
+                }
             }
         }
 
         public void Stop()
         {
+            _terminate = true;
+
+            List<Task> tasks = new List<Task>();
+
+            foreach (Job job in _jobRepository.WorkingJobs)
+            {
+                tasks.Add(job.Terminate());
+            }
+
+            Task.WaitAll(tasks.ToArray());
+
             _listener.Stop();
         }
-
 
         private async Task AcceptJob(WebSocketContext socketContext)
         {
@@ -40,14 +59,25 @@ namespace WebSocketService
             {
                 TJob job = new TJob()
                 {
-                    SocketContext = socketContext
+                    SocketContext = socketContext,
                 };
 
-                JobPolicyOnCompletion policy = await job.Run();
+                _jobRepository.Register(job);
 
-                if (policy == JobPolicyOnCompletion.Termiante)
+                try
                 {
-                    break;
+                    JobPolicyOnCompletion policy = await job.Run();
+
+                    if (policy == JobPolicyOnCompletion.Termiante)
+                    {
+                        await job.Terminate();
+
+                        break;
+                    }
+                }
+                finally
+                {
+                    _jobRepository.Unregister(job);
                 }
             }
         }
