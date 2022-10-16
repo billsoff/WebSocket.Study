@@ -34,29 +34,55 @@
         const output = document.querySelector("#output");
         const textarea = document.querySelector("textarea");
         const wsUri = "ws://127.0.0.1:8089/";
-        const websocket = new WebSocket(wsUri);
 
         button.addEventListener("click", onClickButton);
 
-        websocket.onopen = (e) => {
+        const websocket = new WebSocket(wsUri);
+
+        websocket.addEventListener('open', function () {
             writeToScreen("CONNECTED");
-        };
+        })
 
-        websocket.onclose = (e) => {
-            writeToScreen("DISCONNECTED");
-        };
-
-        websocket.onmessage = (e) => {
+        websocket.addEventListener('message', function (e) {
             writeToScreen(`<span>RESPONSE: ${e.data}</span>`);
-        };
+        })
 
-        websocket.onerror = (e) => {
-            writeToScreen(`<span class="error">ERROR:</span> ${e.data}`);
-        };
+        websocket.addEventListener('close', function (e) {
+            writeToScreen(`DISCONNECTED. code: ${e.code}, reason: ${e.reason}, wasClean: ${e.wasClean}`);
+        })
+
+        websocket.addEventListener('error', function (e) {
+            writeToScreen(`<span class="error">ERROR:</span> ${e.toString()}`);
+        })
 
         function doSend(message) {
+            if (websocket.readyState !== WebSocket.OPEN) {
+                writeToScreen(`CANNOT SEND: socket now is not open (${websocket.readyState} - ${getSocketState(websocket.readyState)})`);
+
+                return;
+            }
+
             writeToScreen(`SENT: ${message}`);
             websocket.send(message);
+        }
+
+        function getSocketState(code) {
+            switch (code) {
+                case 0:
+                    return "CONNECTING"
+
+                case 1:
+                    return "OPEN"
+
+                case 2:
+                    return "CLOSING";
+
+                case 3:
+                    return "CLOSED";
+
+                default:
+                    return "UNKNOWN";
+            }
         }
 
         function writeToScreen(message) {
