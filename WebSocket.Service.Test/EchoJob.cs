@@ -7,6 +7,8 @@ namespace WebSocketService.Test
     {
         private string _message;
 
+        internal string Suffix { get; set; }
+
         public override bool Recognize(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
@@ -22,7 +24,7 @@ namespace WebSocketService.Test
 
         public override async Task<JobExecutionStep> Execute()
         {
-            await SendAsync($"Hello! {_message}");
+            await SendAsync($"Hello! {_message} {Suffix}");
 
             return JobExecutionStep.WaitNextReceive;
         }

@@ -8,7 +8,10 @@ namespace WebSocketService.Test
     {
         static void Main(string[] args)
         {
-            using (WebSocketServer<EchoJob> server = new WebSocketServer<EchoJob>("http://127.0.0.1:8089/"))
+            string address = "http://127.0.0.1:8089/";
+            EchoJobInitializer jobInitializer = new EchoJobInitializer("^_^");
+
+            using (WebSocketServer<EchoJob> server = new WebSocketServer<EchoJob>(address, jobInitializer))
             {
                 Task _ = server.Start();
 
