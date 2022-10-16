@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+﻿using System.Net;
 using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace WebSocketService
@@ -48,9 +43,9 @@ namespace WebSocketService
                     SocketContext = socketContext
                 };
 
-                bool continueNextJob = await job.Run();
+                JobPolicyOnCompletion policy = await job.Run();
 
-                if (!continueNextJob)
+                if (policy == JobPolicyOnCompletion.Termiante)
                 {
                     break;
                 }

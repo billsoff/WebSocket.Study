@@ -8,6 +8,6 @@ namespace WebSocketService
 
         Task<JobExecutionStep> Execute();
 
-        bool ContinueNextJob();
+        JobPolicyOnCompletion DeterminePolicyOnCompletion();
     }
 }

@@ -43,6 +43,7 @@
     <Compile Include="IJob.cs" />
     <Compile Include="Job.cs" />
     <Compile Include="JobExecutionStep.cs" />
+    <Compile Include="JobPolicyOnCompletion.cs" />
     <Compile Include="WebSocketServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

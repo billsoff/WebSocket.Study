@@ -22,9 +22,9 @@ namespace WebSocketService.Test
             return JobExecutionStep.WaitNextReceive;
         }
 
-        public override bool ContinueNextJob()
+        public override JobPolicyOnCompletion DeterminePolicyOnCompletion()
         {
-            return true;
+            return JobPolicyOnCompletion.Termiante;
         }
     }
 }

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -13,7 +10,7 @@ namespace WebSocketService
     {
         private readonly ArraySegment<byte> _buffer = new ArraySegment<byte>(new byte[1024 * 1024]); // 1M
 
-        internal async Task<bool> Run()
+        internal async Task<JobPolicyOnCompletion> Run()
         {
             while (true)
             {
@@ -22,7 +19,7 @@ namespace WebSocketService
 
                 if (!recognized)
                 {
-                    return true;
+                    return JobPolicyOnCompletion.ContinueNextJob;
                 }
 
                 JobExecutionStep step = await Execute();
@@ -33,14 +30,14 @@ namespace WebSocketService
                 }
             }
 
-            return ContinueNextJob();
+            return DeterminePolicyOnCompletion();
         }
 
         public abstract bool Recognize(string message);
 
         public abstract Task<JobExecutionStep> Execute();
 
-        public abstract bool ContinueNextJob();
+        public abstract JobPolicyOnCompletion DeterminePolicyOnCompletion();
 
         protected async Task SendAsync(string message)
         {
