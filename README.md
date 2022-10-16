@@ -6,6 +6,7 @@
   - [x] Is there event with close prompt window?　NG
   - [ ] Read address from configuration file
   - [ ] Receive complete message (multiple reading)
+  - [ ] If client close the socket, what happen?
 
 ## Printing Command Schema
 
