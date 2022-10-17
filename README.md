@@ -7,6 +7,7 @@
   - [ ] Read address from configuration file
   - [ ] Receive complete message (multiple reading)
   - [ ] If client close the socket, what happen?
+  - [ ] When `WebSocket#ReceiveAsync()`, if closed, what happen?
   - [x] `JobRepository` class need `sealed` keyword
   - [x] `JobRepositoty#WorkingJobs` should return `IList`
   - [x] `WebSocketServer` `Start` should append `Async`
@@ -14,6 +15,7 @@
   - [ ] `WebSocketServer` need locker?
   - [x] client.html add `;`
   - [x] `WebSocketServer#AcceptJob()` loop exit using `return` (L96)
+  - [ ] `Job#Terminate()` if not open, should do nothing
 
 ## Printing Command Schema
 
