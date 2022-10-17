@@ -12,7 +12,7 @@
   - [x] `WebSocketServer` `Start` should append `Async`
   - [x] `WebSocketServer` new express remove `()` (L80)
   - [ ] `WebSocketServer` need locker?
-  - [ ] client.html add `;`
+  - [x] client.html add `;`
 
 ## Printing Command Schema
 
