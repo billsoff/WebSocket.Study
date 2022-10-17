@@ -8,7 +8,7 @@
   - [ ] Receive complete message (multiple reading)
   - [ ] If client close the socket, what happen?
   - [x] `JobRepository` class need `sealed` keyword
-  - [ ] `JobRepositoty#WorkingJobs` should return `IList`
+  - [x] `JobRepositoty#WorkingJobs` should return `IList`
   - [ ] `WebSocketServer` `Start` should append `Async`
   - [ ] `WebSocketServer` L80 remove `()`
   - [ ] `WebSocketServer` need locker?
