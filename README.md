@@ -8,6 +8,7 @@
   - [ ] Receive complete message (multiple reading)
   - [ ] If client close the socket, what happen?
   - [ ] `JobRepository` class need `sealed` keyword
+  - [ ] `JobRepositoty#WorkingJobs` should return `IList`
 
 ## Printing Command Schema
 
