@@ -77,7 +77,7 @@ namespace WebSocketService
                     return;
                 }
 
-                TJob job = new TJob()
+                TJob job = new TJob
                 {
                     SocketContext = socketContext,
                 };

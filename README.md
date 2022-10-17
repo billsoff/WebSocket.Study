@@ -10,7 +10,7 @@
   - [x] `JobRepository` class need `sealed` keyword
   - [x] `JobRepositoty#WorkingJobs` should return `IList`
   - [x] `WebSocketServer` `Start` should append `Async`
-  - [ ] `WebSocketServer` L80 remove `()`
+  - [x] `WebSocketServer` new express remove `()` (L80)
   - [ ] `WebSocketServer` need locker?
   - [ ] client.html add `;`
 
