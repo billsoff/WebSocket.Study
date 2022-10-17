@@ -29,7 +29,7 @@ namespace WebSocketService
             _listener.Prefixes.Add(listeningAddress);
         }
 
-        public async Task Start()
+        public async Task StartAsync()
         {
             _listener.Start();
 

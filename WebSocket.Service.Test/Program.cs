@@ -13,7 +13,7 @@ namespace WebSocketService.Test
 
             using (WebSocketServer<EchoJob> server = new WebSocketServer<EchoJob>(address, jobInitializer))
             {
-                Task _ = server.Start();
+                Task _ = server.StartAsync();
 
                 Console.WriteLine("Start web socket at http://127.0.0.1:8089/");
 

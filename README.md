@@ -9,7 +9,7 @@
   - [ ] If client close the socket, what happen?
   - [x] `JobRepository` class need `sealed` keyword
   - [x] `JobRepositoty#WorkingJobs` should return `IList`
-  - [ ] `WebSocketServer` `Start` should append `Async`
+  - [x] `WebSocketServer` `Start` should append `Async`
   - [ ] `WebSocketServer` L80 remove `()`
   - [ ] `WebSocketServer` need locker?
   - [ ] client.html add `;`
