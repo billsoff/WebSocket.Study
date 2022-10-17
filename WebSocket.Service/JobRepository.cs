@@ -2,7 +2,7 @@
 
 namespace WebSocketService
 {
-    internal class JobRepository
+    internal sealed class JobRepository
     {
         private readonly List<Job> _jobs = new List<Job>();
         private readonly object _locker = new object();
