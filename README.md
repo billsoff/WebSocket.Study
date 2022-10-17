@@ -13,6 +13,7 @@
   - [x] `WebSocketServer` new express remove `()` (L80)
   - [ ] `WebSocketServer` need locker?
   - [x] client.html add `;`
+  - [x] `WebSocketServer#AcceptJob()` loop exit using `return` (L96)
 
 ## Printing Command Schema
 

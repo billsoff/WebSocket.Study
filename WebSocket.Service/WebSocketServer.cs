@@ -93,7 +93,7 @@ namespace WebSocketService
                     {
                         await job.Terminate();
 
-                        break;
+                        return;
                     }
                 }
                 finally
