@@ -9,6 +9,7 @@
   - [ ] If client close the socket, what happen?
   - [ ] `JobRepository` class need `sealed` keyword
   - [ ] `JobRepositoty#WorkingJobs` should return `IList`
+  - [ ] `WebSocketServer` `Start` should append `Async`
 
 ## Printing Command Schema
 
