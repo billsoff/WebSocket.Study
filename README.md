@@ -16,6 +16,7 @@
   - [x] client.html add `;`
   - [x] `WebSocketServer#AcceptJob()` loop exit using `return` (L96)
   - [ ] `Job#Terminate()` if not open, should do nothing
+  - [ ] If port occupied, need check
 
 ## Printing Command Schema
 
