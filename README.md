@@ -17,6 +17,7 @@
   - [x] `WebSocketServer#AcceptJob()` loop exit using `return` (L96)
   - [ ] `Job#Terminate()` if not open, should do nothing
   - [ ] If port occupied, need check
+  - [ ] `WebSocketCliennt` close event?
 
 ## Printing Command Schema
 
