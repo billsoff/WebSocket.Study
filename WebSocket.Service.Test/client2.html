@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        textarea {
+            vertical-align: bottom;
+        }
+
+        #output {
+            overflow: auto;
+        }
+
+            #output > p {
+                overflow-wrap: break-word;
+            }
+
+            #output span {
+                color: blue;
+            }
+
+                #output span.error {
+                    color: red;
+                }
+    </style>
+    <script src="./ClientWebSocket.js"></script>
+</head>
+<body>
+    <h2>WebSocket Test</h2>
+    <textarea cols="60" rows="6"></textarea>
+    <button>send</button>
+    <div id="output"></div>
+    <script>
+        // http://www.websocket.org/echo.html
+        const button = document.querySelector("button");
+        const output = document.querySelector("#output");
+        const textarea = document.querySelector("textarea");
+        const wsUri = "ws://127.0.0.1:8089/";
+
+        button.addEventListener("click", onClickButton);
+
+        var socket = new ClientWebSocket(wsUri);
+
+        notifyOnOpen();
+        recieveMessage();
+        notifyOnClose();
+
+        async function notifyOnOpen() {
+            const isConnected = await socket.isConnected();
+
+            if (isConnected) {
+                writeToScreen("CONNECTED");
+            }
+        }
+
+        async function recieveMessage() {
+            while (await socket.isConnected()) {
+                try {
+                    const message = await socket.recieve();
+                    writeToScreen(`<span>RESPONSE: ${message}</span>`);
+                } catch (e) {
+                    writeToScreen(`<span class="error">ERROR:</span> ${e.toString()}`);
+
+                    break;
+                }
+            }
+        }
+
+        async function notifyOnClose() {
+            await socket.utilClose();
+
+            if (socket.isAborted) {
+                writeToScreen(`<span class="error">ERROR:</span> ${socket.errorEvent.toString()}`);
+            }
+
+            writeToScreen(`DISCONNECTED. code: ${socket.code}, reason: ${socket.reason}, wasClean: ${socket.wasClean}`);
+        }
+
+        async function doSend(message) {
+            const isConnected = await socket.isConnected();
+
+            if (!isConnected) {
+                writeToScreen(`CANNOT SEND: socket now is not open (${socket.readyState} - ${getSocketState(socket.readyState)})`);
+
+                return;
+            }
+
+            writeToScreen(`SENT: ${message}`);
+            await socket.send(message);
+        }
+
+        function getSocketState(code) {
+            switch (code) {
+                case 0:
+                    return "CONNECTING";
+
+                case 1:
+                    return "OPEN";
+
+                case 2:
+                    return "CLOSING";
+
+                case 3:
+                    return "CLOSED";
+
+                default:
+                    return "UNKNOWN";
+            }
+        }
+
+        function writeToScreen(message) {
+            output.insertAdjacentHTML("afterbegin", `<p>${message}</p>`);
+        }
+
+        async function onClickButton() {
+            const text = textarea.value;
+
+            text && await doSend(text);
+            textarea.value = "";
+            textarea.focus();
+        }
+    </script>
+</body>
+</html>
