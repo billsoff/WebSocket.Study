@@ -1,63 +1,46 @@
 ﻿function ClientWebSocket(url) {
-    this.url = url;
-
     this.messageBuffer = [];
 
     this.isConnectedResolvings = [];
     this.recieveResolvings = [];
-
     this.utilCloseResolvings = [];
 
-    this.socket = (function (client) {
-        const socket = new WebSocket(client.url);
+    this.url = url;
+    this.socket = new WebSocket(url);
 
-        socket.addEventListener('open', onOpen);
-        socket.addEventListener('message', onMessage);
-        socket.addEventListener('error', onError);
-        socket.addEventListener('close', onClose)
+    this.socket.addEventListener('open', () => {
+        this.isConnectedResolvings
+            .splice(0, this.isConnectedResolvings.length)
+            .forEach(resolve => resolve(true));
+    });
 
-        return socket;
+    this.socket.addEventListener('message', e => {
+        this.messageBuffer.push(e.data);
 
-        function onOpen() {
-            client
-                .isConnectedResolvings
-                .splice(0, client.isConnectedResolvings.length)
-                .forEach(([resole]) => resole(true));
+        const [resolve] = this.recieveResolvings.shift() || {};
+
+        if (resolve) {
+            resolve(this.messageBuffer.shift());
         }
+    });
 
-        function onMessage(e) {
-            client.messageBuffer.push(e.data);
+    this.socket.addEventListener('error', e => {
+        this.errorEvent = e;
+    });
 
-            const resolving = client.recieveResolvings.shift();
+    this.socket.addEventListener('close', e => {
+        this.closeEvent = e;
 
-            if (resolving) {
-                const resolve = resolving[0];
-
-                return client.recievedArrival();
-            }
-        }
-
-        function onError(e) {
-            client.errorEvent = e;
-        }
-
-        function onClose(e) {
-            client.closeEvent = e;
-
-            client
-                .isConnectedResolvings
-                .splice(0, client.isConnectedResolvings.length)
-                .forEach(([resole]) => resole(false));
-            client
-                .utilCloseResolvings
-                .splice(0, client.utilCloseResolvings.length)
-                .forEach(resolve => resolve());
-            client
-                .recieveResolvings
-                .splice(0, client.recieveResolvings.length)
-                .forEach(([_, reject]) => reject(new Error('Receive message failed. Connection cannot be established or was already closed.')));
-        }
-    })(this);
+        this.isConnectedResolvings
+            .splice(0, this.isConnectedResolvings.length)
+            .forEach(resolve => resolve(false));
+        this.utilCloseResolvings
+            .splice(0, this.utilCloseResolvings.length)
+            .forEach(resolve => resolve());
+        this.recieveResolvings
+            .splice(0, this.recieveResolvings.length)
+            .forEach(([_, reject]) => reject(new Error('Receive message failed. Connection cannot be established or was already closed.')));
+    });
 }
 
 ClientWebSocket.prototype = {
@@ -71,7 +54,6 @@ ClientWebSocket.prototype = {
 
     isConnectedResolvings: null,
     recieveResolvings: null,
-
     utilCloseResolvings: null,
 
     get readyState() {
