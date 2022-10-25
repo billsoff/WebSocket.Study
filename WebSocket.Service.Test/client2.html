@@ -41,7 +41,7 @@
         var socket = new ClientWebSocket(wsUri);
 
         notifyOnOpen();
-        recieveMessage();
+        receiveMessage();
         notifyOnClose();
 
         async function notifyOnOpen() {
@@ -52,10 +52,10 @@
             }
         }
 
-        async function recieveMessage() {
+        async function receiveMessage() {
             while (await socket.isConnected()) {
                 try {
-                    const message = await socket.recieve();
+                    const message = await socket.receive();
                     writeToScreen(`<span>RESPONSE: ${message}</span>`);
                 } catch (e) {
                     writeToScreen(`<span class="error">ERROR:</span> ${e.toString()}`);

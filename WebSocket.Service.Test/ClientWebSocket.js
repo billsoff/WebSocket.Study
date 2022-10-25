@@ -2,7 +2,7 @@
     this.messageBuffer = [];
 
     this.isConnectedResolvings = [];
-    this.recieveResolvings = [];
+    this.receiveResolvings = [];
     this.utilCloseResolvings = [];
 
     this.url = url;
@@ -17,7 +17,7 @@
     this.socket.addEventListener('message', e => {
         this.messageBuffer.push(e.data);
 
-        const [resolve] = this.recieveResolvings.shift() || {};
+        const [resolve] = this.receiveResolvings.shift() || {};
 
         if (resolve) {
             resolve(this.messageBuffer.shift());
@@ -37,8 +37,8 @@
         this.utilCloseResolvings
             .splice(0, this.utilCloseResolvings.length)
             .forEach(resolve => resolve());
-        this.recieveResolvings
-            .splice(0, this.recieveResolvings.length)
+        this.receiveResolvings
+            .splice(0, this.receiveResolvings.length)
             .forEach(([_, reject]) => reject(new Error('Receive message failed. Connection cannot be established or was already closed.')));
     });
 }
@@ -53,7 +53,7 @@ ClientWebSocket.prototype = {
     messageBuffer: null,
 
     isConnectedResolvings: null,
-    recieveResolvings: null,
+    receiveResolvings: null,
     utilCloseResolvings: null,
 
     get readyState() {
@@ -107,25 +107,25 @@ ClientWebSocket.prototype = {
         }
     },
 
-    async recieve() {
+    async receive() {
         const message = this.messageBuffer.shift();
 
         if (message !== undefined) {
             return message;
         }
 
-        return new Promise((resolve, reject) => this.recieveResolvings.push([resolve, reject]));
+        return new Promise((resolve, reject) => this.receiveResolvings.push([resolve, reject]));
     },
 
     close() {
         this.socket.close();
     },
 
-    recieveArrival() {
+    receiveArrival() {
         return this.messageBuffer.shift() || null;
     },
 
-    recieveAllArrivals() {
+    receiveAllArrivals() {
         return this.messageBuffer.splice(0, this.messageBuffer.length);
     },
 
