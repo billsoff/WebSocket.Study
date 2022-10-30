@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocket.Service.Test", "W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonTest", "JsonTest\JsonTest.csproj", "{16B1E594-F551-4A51-9D46-492BCEC77B6E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocket.Service.TestWithWinForm", "WebSocket.Service.TestWithWinForm\WebSocket.Service.TestWithWinForm.csproj", "{0072D8A7-2331-4620-AE14-3AE05790D254}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{16B1E594-F551-4A51-9D46-492BCEC77B6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16B1E594-F551-4A51-9D46-492BCEC77B6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{16B1E594-F551-4A51-9D46-492BCEC77B6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0072D8A7-2331-4620-AE14-3AE05790D254}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0072D8A7-2331-4620-AE14-3AE05790D254}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0072D8A7-2331-4620-AE14-3AE05790D254}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0072D8A7-2331-4620-AE14-3AE05790D254}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

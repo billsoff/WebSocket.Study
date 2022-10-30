@@ -18,6 +18,7 @@
   - [ ] `Job#Terminate()` if not open, should do nothing
   - [ ] If port occupied, need check
   - [ ] `WebSocketCliennt` close event?
+  - [ ] `ReceiveAsync` should provide CancellationToken
 
 ## Printing Command Schema
 
