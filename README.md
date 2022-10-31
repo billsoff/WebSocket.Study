@@ -19,6 +19,9 @@
   - [ ] If port occupied, need check
   - [ ] `WebSocketCliennt` close event?
   - [ ] `ReceiveAsync` should provide CancellationToken
+  - [ ] NotifyIcon的Visible属性要设为False，当程序退出时
+  - [ ] [assembly: AssemblyTitle("印刷助手")]
+  - [ ] 考虑应用程序单例
 
 ## Printing Command Schema
 
