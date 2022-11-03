@@ -85,6 +85,8 @@ namespace WebSocketService
                 _jobInitializer?.Initialize(job);
                 _jobRepository.Register(job);
 
+                Console.WriteLine("Job count: {0}", _jobRepository.WorkingJobs.Count);
+
                 try
                 {
                     JobPolicyOnCompletion policy = await job.Run();
@@ -96,9 +98,16 @@ namespace WebSocketService
                         return;
                     }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    throw;
+                }
                 finally
                 {
                     _jobRepository.Unregister(job);
+                    Console.WriteLine("Socket status: {0}", socketContext.WebSocket.State);
+                    Console.WriteLine("Job count: {0}", _jobRepository.WorkingJobs.Count);
                 }
             }
         }

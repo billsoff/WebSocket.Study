@@ -87,14 +87,30 @@ namespace WebSocketService
 
         private async Task<string> ReceiveAsync()
         {
-            WebSocketReceiveResult result = await Socket.ReceiveAsync(_buffer, CancellationToken.None);
-            string message = Encoding.UTF8.GetString(
-                    _buffer.Array,
-                    0,
-                    result.Count
-                );
+            try
+            {
+                WebSocketReceiveResult result = await Socket.ReceiveAsync(_buffer, CancellationToken.None);
+                string message = Encoding.UTF8.GetString(
+                        _buffer.Array,
+                        0,
+                        result.Count
+                    );
 
-            return message;
+                return message;
+
+            }
+            catch (Exception ex) when (LogException(ex))
+            {
+                // 何も処理しない
+                throw;
+            }
+        }
+
+        private static bool LogException(Exception　e)
+        {
+            Console.WriteLine(e);
+            Console.WriteLine(e.GetBaseException());
+            return false;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,6 +9,10 @@ namespace WebSocketService.Test
     {
         static void Main(string[] args)
         {
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+
+            Console.OutputEncoding = Encoding.UTF8;
+
             string address = "http://127.0.0.1:8089/";
             EchoJobInitializer jobInitializer = new EchoJobInitializer("^_^");
 
@@ -40,6 +45,13 @@ namespace WebSocketService.Test
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey(true);
+        }
+
+        private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            e.SetObserved();
+
+            Console.WriteLine("タスクの異常:\r\n{0}", e.Exception);
         }
     }
 }
