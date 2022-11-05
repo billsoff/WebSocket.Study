@@ -9,17 +9,24 @@ namespace WebSocketService
     public abstract class Job : IJob
     {
         private readonly ArraySegment<byte> _buffer = new ArraySegment<byte>(new byte[1024 * 1024]); // 1M
-        private JobExecutionStep _executionStep;
 
         internal WebSocketContext SocketContext { get; set; }
 
-        private WebSocket Socket { get => SocketContext.WebSocket; }
+        internal WebSocket Socket { get => SocketContext.WebSocket; }
+
+        public JobExecutionStep ExecutionStep { get; private set; }
 
         internal async Task<JobPolicyOnCompletion> Run()
         {
             while (true)
             {
                 string message = await ReceiveAsync();
+
+                if (Socket.State != WebSocketState.Open)
+                {
+                    return JobPolicyOnCompletion.Termiante;
+                }
+
                 bool recognized = Recognize(message);
 
                 if (!recognized)
@@ -27,9 +34,9 @@ namespace WebSocketService
                     return JobPolicyOnCompletion.ContinueNextJob;
                 }
 
-                _executionStep = await Execute();
+                ExecutionStep = await Execute();
 
-                if (_executionStep == JobExecutionStep.Complete)
+                if (ExecutionStep == JobExecutionStep.Complete)
                 {
                     break;
                 }
@@ -61,30 +68,6 @@ namespace WebSocketService
                 );
         }
 
-        internal async Task Terminate()
-        {
-            if (_executionStep != JobExecutionStep.Complete)
-            {
-                const int WAIT_MAX_SECONDS = 20;
-
-                for (int i = 0; i < WAIT_MAX_SECONDS; i++)
-                {
-                    await Task.Delay(1000); // 1s
-
-                    if (_executionStep == JobExecutionStep.Complete)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            await Socket.CloseAsync(
-                    WebSocketCloseStatus.NormalClosure,
-                    null,
-                    CancellationToken.None
-                );
-        }
-
         private async Task<string> ReceiveAsync()
         {
             try
@@ -97,7 +80,6 @@ namespace WebSocketService
                     );
 
                 return message;
-
             }
             catch (Exception ex) when (LogException(ex))
             {
@@ -106,7 +88,7 @@ namespace WebSocketService
             }
         }
 
-        private static bool LogException(Exception　e)
+        private static bool LogException(Exception e)
         {
             Console.WriteLine(e);
             Console.WriteLine(e.GetBaseException());

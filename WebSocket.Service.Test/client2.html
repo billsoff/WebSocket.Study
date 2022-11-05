@@ -36,6 +36,8 @@
         const textarea = document.querySelector("textarea");
         const wsUri = "ws://127.0.0.1:8089/";
 
+        textarea.focus();
+
         button.addEventListener("click", onClickButton);
 
         var socket = new ClientWebSocket(wsUri);
@@ -115,7 +117,6 @@
             const text = textarea.value;
 
             text && await doSend(text);
-            textarea.value = "";
             textarea.focus();
         }
     </script>

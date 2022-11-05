@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.WebSockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WebSocketService
@@ -31,7 +32,17 @@ namespace WebSocketService
 
         public async Task StartAsync()
         {
-            _listener.Start();
+            try
+            {
+                _listener.Start();
+            }
+            catch (HttpListenerException ex)
+            {
+                // TODO: StatusEvent
+                Console.WriteLine(ex);
+
+                return;
+            }
 
             while (true)
             {
@@ -55,7 +66,7 @@ namespace WebSocketService
 
             foreach (Job job in _jobRepository.WorkingJobs)
             {
-                tasks.Add(job.Terminate());
+                tasks.Add(Terminate(job));
             }
 
             Task.WaitAll(tasks.ToArray());
@@ -72,11 +83,6 @@ namespace WebSocketService
         {
             while (true)
             {
-                if (socketContext.WebSocket.State != WebSocketState.Open)
-                {
-                    return;
-                }
-
                 TJob job = new TJob
                 {
                     SocketContext = socketContext,
@@ -93,21 +99,89 @@ namespace WebSocketService
 
                     if (policy == JobPolicyOnCompletion.Termiante)
                     {
-                        await job.Terminate();
+                        await Terminate(job);
 
                         return;
                     }
                 }
-                catch (Exception ex)
+                catch (WebSocketException ex)
                 {
                     Console.WriteLine(ex);
-                    throw;
                 }
                 finally
                 {
                     _jobRepository.Unregister(job);
-                    Console.WriteLine("Socket status: {0}", socketContext.WebSocket.State);
+                    Console.WriteLine("Socket state: {0}", socketContext.WebSocket.State);
+                    Console.WriteLine("Socket close status: {0}", socketContext.WebSocket.CloseStatus);
                     Console.WriteLine("Job count: {0}", _jobRepository.WorkingJobs.Count);
+                }
+            }
+        }
+
+        private async Task Terminate(Job job)
+        {
+            WebSocket socket = job.Socket;
+
+            switch (socket.State)
+            {
+                case WebSocketState.Open:
+                    await WaitJobComplete(job);
+
+                    if (socket.State == WebSocketState.Open)
+                    {
+                        await socket.CloseAsync(
+                               WebSocketCloseStatus.NormalClosure,
+                               null,
+                               CancellationToken.None
+                           );
+                    }
+                    else
+                    {
+                        await Terminate(job);
+                    }
+
+                    return;
+
+                case WebSocketState.CloseReceived:
+                    await socket.CloseOutputAsync(
+                            WebSocketCloseStatus.NormalClosure,
+                            null,
+                            CancellationToken.None
+                        );
+
+                    return;
+
+                case WebSocketState.None:
+                case WebSocketState.Connecting:
+                case WebSocketState.CloseSent:
+                case WebSocketState.Closed:
+                case WebSocketState.Aborted:
+                default:
+                    return;
+            }
+        }
+
+        private async Task WaitJobComplete(Job job)
+        {
+            if (job.ExecutionStep == JobExecutionStep.Complete)
+            {
+                return;
+            }
+
+            const int WAIT_MAX_SECONDS = 20;
+
+            for (int i = 0; i < WAIT_MAX_SECONDS; i++)
+            {
+                await Task.Delay(1000); // 1s
+
+                if (job.Socket.State != WebSocketState.Open)
+                {
+                    return;
+                }
+
+                if (job.ExecutionStep == JobExecutionStep.Complete)
+                {
+                    return;
                 }
             }
         }
