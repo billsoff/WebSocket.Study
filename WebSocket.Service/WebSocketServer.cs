@@ -12,7 +12,7 @@ namespace WebSocketService
     {
         private readonly HttpListener _listener;
 
-        private readonly JobRepository _jobRepository = new JobRepository();
+        private readonly JobRepository<TJob> _jobRepository = new JobRepository<TJob>();
         private volatile bool _terminate;
 
         private readonly IJobInitializer<TJob> _jobInitializer;
@@ -28,7 +28,24 @@ namespace WebSocketService
 
             _listener = new HttpListener();
             _listener.Prefixes.Add(listeningAddress);
+
+            ListeningAddress = listeningAddress;
         }
+
+        public event EventHandler Ready;
+        public event EventHandler<WebSocketServerFaultEventArgs> Fault;
+        public event EventHandler Stopped;
+
+        public event EventHandler<JobEventArgs<TJob>> JobCreated;
+        public event EventHandler<JobEventArgs<TJob>> JobTermited;
+        public event EventHandler<JobFaultEventArgs<TJob>> JobFault;
+        public event EventHandler<JobEventArgs<TJob>> JobRemoved;
+
+        public string ListeningAddress { get; private set; }
+
+        public WebSocketServerState State { get; private set; } = WebSocketServerState.Initial;
+
+        public IList<TJob> GetActiveJobs() => _jobRepository.GetActiveJobs();
 
         public async Task StartAsync()
         {
@@ -38,11 +55,14 @@ namespace WebSocketService
             }
             catch (HttpListenerException ex)
             {
-                // TODO: StatusEvent
-                Console.WriteLine(ex);
+                State = WebSocketServerState.Fault;
+                Fault?.Invoke(this, new WebSocketServerFaultEventArgs(ex));
 
                 return;
             }
+
+            State = WebSocketServerState.Running;
+            Ready?.Invoke(this, EventArgs.Empty);
 
             while (true)
             {
@@ -64,7 +84,7 @@ namespace WebSocketService
 
             List<Task> tasks = new List<Task>();
 
-            foreach (Job job in _jobRepository.WorkingJobs)
+            foreach (Job job in GetActiveJobs())
             {
                 tasks.Add(Terminate(job));
             }
@@ -72,6 +92,9 @@ namespace WebSocketService
             Task.WaitAll(tasks.ToArray());
 
             _listener.Stop();
+
+            State = WebSocketServerState.Stopped;
+            Stopped?.Invoke(this, EventArgs.Empty);
         }
 
         public void Dispose()
@@ -81,8 +104,15 @@ namespace WebSocketService
 
         private async Task AcceptJob(WebSocketContext socketContext)
         {
+            WebSocket socket = socketContext.WebSocket;
+
             while (true)
             {
+                if (socket.State != WebSocketState.Open)
+                {
+                    break;
+                }
+
                 TJob job = new TJob
                 {
                     SocketContext = socketContext,
@@ -91,29 +121,42 @@ namespace WebSocketService
                 _jobInitializer?.Initialize(job);
                 _jobRepository.Register(job);
 
-                Console.WriteLine("Job count: {0}", _jobRepository.WorkingJobs.Count);
+                JobCreated?.Invoke(this, new JobEventArgs<TJob>(job, GetActiveJobs()));
 
                 try
                 {
-                    JobPolicyOnCompletion policy = await job.Run();
-
-                    if (policy == JobPolicyOnCompletion.Termiante)
-                    {
-                        await Terminate(job);
-
-                        return;
-                    }
+                    await RunJob(job);
                 }
                 catch (WebSocketException ex)
                 {
-                    Console.WriteLine(ex);
+                    JobFault?.Invoke(this, new JobFaultEventArgs<TJob>(job, GetActiveJobs(), ex));
+
+                    break;
                 }
                 finally
                 {
                     _jobRepository.Unregister(job);
-                    Console.WriteLine("Socket state: {0}", socketContext.WebSocket.State);
-                    Console.WriteLine("Socket close status: {0}", socketContext.WebSocket.CloseStatus);
-                    Console.WriteLine("Job count: {0}", _jobRepository.WorkingJobs.Count);
+                    JobRemoved?.Invoke(this, new JobEventArgs<TJob>(job, GetActiveJobs()));
+                }
+            }
+        }
+
+        private async Task RunJob(TJob job)
+        {
+            while (true)
+            {
+                await job.Run();
+
+                if (!job.IsActive || !job.IsReusable)
+                {
+                    if (!job.IsActive)
+                    {
+                        await Terminate(job);
+
+                        JobTermited?.Invoke(this, new JobEventArgs<TJob>(job, GetActiveJobs()));
+                    }
+
+                    break;
                 }
             }
         }
@@ -163,7 +206,7 @@ namespace WebSocketService
 
         private async Task WaitJobComplete(Job job)
         {
-            if (job.ExecutionStep == JobExecutionStep.Complete)
+            if (!job.IsActive || job.IsIdle)
             {
                 return;
             }
@@ -174,12 +217,7 @@ namespace WebSocketService
             {
                 await Task.Delay(1000); // 1s
 
-                if (job.Socket.State != WebSocketState.Open)
-                {
-                    return;
-                }
-
-                if (job.ExecutionStep == JobExecutionStep.Complete)
+                if (!job.IsActive || job.IsIdle)
                 {
                     return;
                 }

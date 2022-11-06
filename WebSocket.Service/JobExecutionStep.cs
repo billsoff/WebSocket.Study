@@ -2,10 +2,10 @@
 {
     public enum JobExecutionStep
     {
+        WaitNextReceive,
+
         Executing,
 
         Complete,
-
-        WaitNextReceive,
     }
 }

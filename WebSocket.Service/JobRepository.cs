@@ -1,24 +1,23 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace WebSocketService
 {
-    internal sealed class JobRepository
+    internal sealed class JobRepository<TJob>
+        where TJob : Job
     {
-        private readonly List<Job> _jobs = new List<Job>();
+        private readonly List<TJob> _jobs = new List<TJob>();
         private readonly object _locker = new object();
 
-        public IList<Job> WorkingJobs
+        public IList<TJob> GetActiveJobs()
         {
-            get
+            lock (_locker)
             {
-                lock (_locker)
-                {
-                    return new List<Job>(_jobs);
-                }
+                return new List<TJob>(_jobs.Where(job => job.IsActive));
             }
         }
 
-        public void Register(Job job)
+        public void Register(TJob job)
         {
             lock (_locker)
             {
@@ -26,7 +25,7 @@ namespace WebSocketService
             }
         }
 
-        public void Unregister(Job job)
+        public void Unregister(TJob job)
         {
             lock (_locker)
             {

@@ -18,6 +18,16 @@ namespace WebSocketService.Test
 
             using (WebSocketServer<EchoJob> server = new WebSocketServer<EchoJob>(address, jobInitializer))
             {
+                server.Ready += OnServerReady;
+                server.Fault += OnServerFault;
+                server.Stopped += OnServerStopped;
+
+                server.JobCreated += OnServerJobCreated;
+                server.JobRemoved += OnServerJobRemoved;
+
+                server.JobTermited += OnServerJobTermited;
+                server.JobFault += OnServerJobFault;
+
                 Task _ = server.StartAsync();
 
                 Console.WriteLine("Start web socket at http://127.0.0.1:8089/");
@@ -45,6 +55,55 @@ namespace WebSocketService.Test
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey(true);
+        }
+
+        private static void OnServerReady(object sender, EventArgs e)
+        {
+            Console.WriteLine("Listening at \"{0}\"", ((WebSocketServer<EchoJob>)sender).ListeningAddress);
+        }
+
+        private static void OnServerStopped(object sender, EventArgs e)
+        {
+            Console.WriteLine("Server stopped.");
+        }
+
+        private static void OnServerFault(object sender, WebSocketServerFaultEventArgs e)
+        {
+            Console.WriteLine("Server startup failed:\r\n{0}", e.Exception);
+        }
+
+        private static void OnServerJobCreated(object sender, JobEventArgs<EchoJob> e)
+        {
+            Console.WriteLine("Job created, count: {0}", e.ActiveJobs.Count);
+            OutputJobStatus(e.Job);
+        }
+
+        private static void OnServerJobRemoved(object sender, JobEventArgs<EchoJob> e)
+        {
+            Console.WriteLine("Job removed, count: {0}", e.ActiveJobs.Count);
+            OutputJobStatus(e.Job);
+        }
+
+        private static void OnServerJobTermited(object sender, JobEventArgs<EchoJob> e)
+        {
+            Console.WriteLine("Job terminated, count: {0}", e.ActiveJobs.Count);
+            OutputJobStatus(e.Job);
+        }
+
+        private static void OnServerJobFault(object sender, JobFaultEventArgs<EchoJob> e)
+        {
+            Console.WriteLine(
+                    "Job fault, count: {0}\r\n{1}",
+                    e.ActiveJobs.Count,
+                    e.Exception
+                );
+            OutputJobStatus(e.Job);
+        }
+
+        private static void OutputJobStatus(Job job)
+        {
+            Console.WriteLine("Socket state: {0}", job.WebSocketState);
+            Console.WriteLine("Socket close status: {0}", job.WebSocketCloseStatus);
         }
 
         private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)

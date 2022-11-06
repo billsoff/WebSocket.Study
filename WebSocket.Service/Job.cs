@@ -14,45 +14,48 @@ namespace WebSocketService
 
         internal WebSocket Socket { get => SocketContext.WebSocket; }
 
-        public JobExecutionStep ExecutionStep { get; private set; }
+        public bool IsActive { get => Socket.State == WebSocketState.Open; }
 
-        internal async Task<JobPolicyOnCompletion> Run()
+        public bool IsIdle { get => ExecutionStep == JobExecutionStep.WaitNextReceive; }
+
+        public JobExecutionStep ExecutionStep { get; private set; } = JobExecutionStep.WaitNextReceive;
+
+        public WebSocketState WebSocketState { get => Socket.State; }
+
+        public WebSocketCloseStatus? WebSocketCloseStatus { get => Socket.CloseStatus; }
+
+        internal async Task Run()
         {
-            while (true)
+            ExecutionStep = JobExecutionStep.WaitNextReceive;
+
+            string message = await ReceiveAsync();
+
+            if (Socket.State != WebSocketState.Open)
             {
-                string message = await ReceiveAsync();
-
-                if (Socket.State != WebSocketState.Open)
-                {
-                    return JobPolicyOnCompletion.Termiante;
-                }
-
-                bool recognized = Recognize(message);
-
-                if (!recognized)
-                {
-                    return JobPolicyOnCompletion.ContinueNextJob;
-                }
-
-                ExecutionStep = await Execute();
-
-                if (ExecutionStep == JobExecutionStep.Complete)
-                {
-                    break;
-                }
+                return;
             }
 
+            bool recognized = Recognize(message);
 
-            return DeterminePolicyOnCompletion();
+            if (!recognized)
+            {
+                return;
+            }
+
+            ExecutionStep = JobExecutionStep.Executing;
+
+            await Execute();
+
+            ExecutionStep = JobExecutionStep.Complete;
         }
 
         #region Job
 
         public abstract bool Recognize(string message);
 
-        public abstract Task<JobExecutionStep> Execute();
+        public abstract Task Execute();
 
-        public abstract JobPolicyOnCompletion DeterminePolicyOnCompletion();
+        public abstract bool IsReusable { get; }
 
         #endregion
 
@@ -68,31 +71,25 @@ namespace WebSocketService
                 );
         }
 
-        private async Task<string> ReceiveAsync()
+        protected async Task<string> ReceiveAsync()
         {
-            try
-            {
-                WebSocketReceiveResult result = await Socket.ReceiveAsync(_buffer, CancellationToken.None);
-                string message = Encoding.UTF8.GetString(
-                        _buffer.Array,
-                        0,
-                        result.Count
-                    );
+            WebSocketReceiveResult result = await Socket.ReceiveAsync(_buffer, CancellationToken.None);
+            string message = Encoding.UTF8.GetString(
+                    _buffer.Array,
+                    0,
+                    result.Count
+                );
 
-                return message;
-            }
-            catch (Exception ex) when (LogException(ex))
-            {
-                // 何も処理しない
-                throw;
-            }
+            return message;
         }
 
-        private static bool LogException(Exception e)
+        protected async Task CloseAsync()
         {
-            Console.WriteLine(e);
-            Console.WriteLine(e.GetBaseException());
-            return false;
+            await Socket.CloseAsync(
+                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
+                    null,
+                    CancellationToken.None
+                );
         }
     }
 }

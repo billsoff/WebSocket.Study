@@ -22,16 +22,14 @@ namespace WebSocketService.Test
             return true;
         }
 
-        public override async Task<JobExecutionStep> Execute()
+        public override async Task Execute()
         {
             await SendAsync($"Hello! {_message} {Suffix}");
-
-            return JobExecutionStep.WaitNextReceive;
         }
 
-        public override JobPolicyOnCompletion DeterminePolicyOnCompletion()
+        public override bool IsReusable
         {
-            return JobPolicyOnCompletion.Termiante;
+            get => true;
         }
     }
 }
