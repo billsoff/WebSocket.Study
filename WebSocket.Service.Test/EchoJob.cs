@@ -16,7 +16,7 @@ namespace WebSocketService.Test
                 return false;
             }
 
-            Console.WriteLine(message);
+            Console.WriteLine("{0} (from job {1})", message, Id);
             _message = message;
 
             return true;

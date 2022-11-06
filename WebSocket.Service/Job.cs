@@ -8,11 +8,20 @@ namespace WebSocketService
 {
     public abstract class Job
     {
+        private static int _sequence;
+
         private readonly ArraySegment<byte> _buffer = new ArraySegment<byte>(new byte[1024 * 1024]); // 1M
+
+        protected Job()
+        {
+            Id = Interlocked.Increment(ref _sequence);
+        }
 
         internal WebSocketContext SocketContext { get; set; }
 
         internal WebSocket Socket { get => SocketContext.WebSocket; }
+
+        public int Id { get; private set; }
 
         public bool IsActive { get => Socket.State == WebSocketState.Open; }
 

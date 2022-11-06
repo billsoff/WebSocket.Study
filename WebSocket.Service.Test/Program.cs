@@ -74,26 +74,27 @@ namespace WebSocketService.Test
 
         private static void OnServerJobCreated(object sender, JobEventArgs<EchoJob> e)
         {
-            Console.WriteLine("Job created, count: {0}", e.ActiveJobs.Count);
+            Console.WriteLine("Job created (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
             OutputJobStatus(e.Job);
         }
 
         private static void OnServerJobRemoved(object sender, JobEventArgs<EchoJob> e)
         {
-            Console.WriteLine("Job removed, count: {0}", e.ActiveJobs.Count);
+            Console.WriteLine("Job removed (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
             OutputJobStatus(e.Job);
         }
 
         private static void OnServerJobTermited(object sender, JobEventArgs<EchoJob> e)
         {
-            Console.WriteLine("Job terminated, count: {0}", e.ActiveJobs.Count);
+            Console.WriteLine("Job terminated (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
             OutputJobStatus(e.Job);
         }
 
         private static void OnServerJobFault(object sender, JobFaultEventArgs<EchoJob> e)
         {
             Console.WriteLine(
-                    "Job fault, count: {0}\r\n{1}",
+                    "Job fault (ID: {0}), total active jobs' count: {1}\r\n{2}",
+                    e.Job.Id,
                     e.ActiveJobs.Count,
                     e.Exception
                 );
@@ -102,8 +103,8 @@ namespace WebSocketService.Test
 
         private static void OutputJobStatus(Job job)
         {
-            Console.WriteLine("Socket state: {0}", job.WebSocketState);
-            Console.WriteLine("Socket close status: {0}", job.WebSocketCloseStatus);
+            Console.WriteLine("Job (ID: {0}) state: {1}", job.Id, job.WebSocketState);
+            Console.WriteLine("Job (ID: {0}) close status: {1}", job.Id, job.WebSocketCloseStatus);
         }
 
         private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
