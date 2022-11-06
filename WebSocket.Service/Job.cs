@@ -10,7 +10,10 @@ namespace WebSocketService
     {
         private static int _sequence;
 
-        private readonly ArraySegment<byte> _buffer = new ArraySegment<byte>(new byte[1024 * 1024]); // 1M
+        private const int BUFFER_SIZE = 1024 * 10; // 10K
+
+        private readonly ArraySegment<byte> _dataBuffer = new ArraySegment<byte>(new byte[BUFFER_SIZE]);
+        private readonly char[] _charBuffer = new char[Encoding.UTF8.GetMaxByteCount(BUFFER_SIZE)];
 
         protected Job()
         {
@@ -82,14 +85,59 @@ namespace WebSocketService
 
         protected async Task<string> ReceiveAsync()
         {
-            WebSocketReceiveResult result = await Socket.ReceiveAsync(_buffer, CancellationToken.None);
-            string message = Encoding.UTF8.GetString(
-                    _buffer.Array,
+            Decoder decoder = Encoding.UTF8.GetDecoder();
+            StringBuilder buffer = new StringBuilder();
+            WebSocketReceiveResult result;
+
+            do
+            {
+                result = await Socket.ReceiveAsync(_dataBuffer, CancellationToken.None);
+
+                DecodeMessage(
+                        decoder,
+                        _dataBuffer.Array,
+                        result.Count,
+                        result.EndOfMessage,
+                        buffer
+                    );
+            } while (!result.EndOfMessage);
+
+            return buffer.ToString();
+        }
+
+        private void DecodeMessage(Decoder decoder, byte[] data, int byteCount, bool endOfMessage, StringBuilder buffer)
+        {
+            int index = 0;
+            int bytesUsed = 0;
+            int charsUsed;
+            bool completed;
+
+            do
+            {
+                int bytesRead = byteCount - index;
+
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+
+                decoder.Convert(
+                    data,
+                    index,
+                    bytesRead,
+                    _charBuffer,
                     0,
-                    result.Count
+                    _charBuffer.Length,
+                    endOfMessage,
+                    out bytesUsed,
+                    out charsUsed,
+                    out completed
                 );
 
-            return message;
+                buffer.Append(_charBuffer, 0, charsUsed);
+
+                index += bytesUsed;
+            } while (!completed);
         }
 
         protected async Task CloseAsync()
