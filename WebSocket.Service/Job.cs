@@ -105,22 +105,25 @@ namespace WebSocketService
             return buffer.ToString();
         }
 
-        private void DecodeMessage(Decoder decoder, byte[] data, int byteCount, bool endOfMessage, StringBuilder buffer)
+        protected async Task CloseAsync()
+        {
+            await Socket.CloseAsync(
+                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
+                    null,
+                    CancellationToken.None
+                );
+        }
+
+        private void DecodeMessage(Decoder decoder, byte[] data, int byteCount, bool hasNoMoreData, StringBuilder buffer)
         {
             int index = 0;
+            int bytesRead = byteCount;
             int bytesUsed = 0;
             int charsUsed;
             bool completed;
 
             do
             {
-                int bytesRead = byteCount - index;
-
-                if (bytesRead == 0)
-                {
-                    break;
-                }
-
                 decoder.Convert(
                     data,
                     index,
@@ -128,7 +131,7 @@ namespace WebSocketService
                     _charBuffer,
                     0,
                     _charBuffer.Length,
-                    endOfMessage,
+                    hasNoMoreData,
                     out bytesUsed,
                     out charsUsed,
                     out completed
@@ -137,16 +140,13 @@ namespace WebSocketService
                 buffer.Append(_charBuffer, 0, charsUsed);
 
                 index += bytesUsed;
-            } while (!completed);
-        }
+                bytesRead -= bytesUsed;
 
-        protected async Task CloseAsync()
-        {
-            await Socket.CloseAsync(
-                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
-                    null,
-                    CancellationToken.None
-                );
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+            } while (!completed);
         }
     }
 }
