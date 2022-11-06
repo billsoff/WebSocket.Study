@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WebSocketService
 {
-    public abstract class Job : IJob
+    public abstract class Job
     {
         private readonly ArraySegment<byte> _buffer = new ArraySegment<byte>(new byte[1024 * 1024]); // 1M
 

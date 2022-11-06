@@ -40,7 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IJob.cs" />
     <Compile Include="IJobInitializer.cs" />
     <Compile Include="Job.cs" />
     <Compile Include="JobEventArgs.cs" />
