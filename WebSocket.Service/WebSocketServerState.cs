@@ -14,6 +14,8 @@ namespace WebSocketService
 
         Fault,
 
-        Stopped
+        Stopping,
+
+        Stopped,
     }
 }

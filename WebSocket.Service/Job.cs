@@ -117,36 +117,28 @@ namespace WebSocketService
         private void DecodeMessage(Decoder decoder, byte[] data, int byteCount, bool hasNoMoreData, StringBuilder buffer)
         {
             int index = 0;
-            int bytesRead = byteCount;
-            int bytesUsed = 0;
-            int charsUsed;
-            bool completed;
+            int bytesToRead = byteCount;
 
-            do
+            while (bytesToRead != 0)
             {
                 decoder.Convert(
                     data,
                     index,
-                    bytesRead,
+                    bytesToRead,
                     _charBuffer,
                     0,
                     _charBuffer.Length,
                     hasNoMoreData,
-                    out bytesUsed,
-                    out charsUsed,
-                    out completed
+                    out int bytesUsed,
+                    out int charsUsed,
+                    out _
                 );
 
                 buffer.Append(_charBuffer, 0, charsUsed);
 
                 index += bytesUsed;
-                bytesRead -= bytesUsed;
-
-                if (bytesRead == 0)
-                {
-                    break;
-                }
-            } while (!completed);
+                bytesToRead -= bytesUsed;
+            }
         }
     }
 }

@@ -16,7 +16,7 @@ namespace WebSocketService.Test
                 return false;
             }
 
-            Console.WriteLine("{0} (from job {1})", message, Id);
+            Console.WriteLine("{0} (from job {1} count: {2:#,##0})", message, Id, message.Length);
             _message = message;
 
             return true;

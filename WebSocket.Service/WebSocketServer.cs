@@ -34,6 +34,7 @@ namespace WebSocketService
 
         public event EventHandler Ready;
         public event EventHandler<WebSocketServerFaultEventArgs> Fault;
+        public event EventHandler Stopping;
         public event EventHandler Stopped;
 
         public event EventHandler<JobEventArgs<TJob>> JobCreated;
@@ -69,18 +70,23 @@ namespace WebSocketService
                 HttpListenerContext listenerContext = await _listener.GetContextAsync();
                 WebSocketContext socketContext = await listenerContext.AcceptWebSocketAsync(null);
 
-                Task _ = AcceptJob(socketContext);
-
                 if (_terminate)
                 {
+                    socketContext.WebSocket.Abort();
+
                     break;
                 }
+
+                Task _ = AcceptJob(socketContext);
             }
         }
 
-        public void Stop()
+        public async Task StopAsync()
         {
+            State = WebSocketServerState.Stopping;
             _terminate = true;
+
+            Stopping?.Invoke(this, EventArgs.Empty);
 
             List<Task> tasks = new List<Task>();
 
@@ -89,7 +95,7 @@ namespace WebSocketService
                 tasks.Add(Terminate(job));
             }
 
-            Task.WaitAll(tasks.ToArray());
+            await Task.WhenAll(tasks.ToArray());
 
             _listener.Stop();
 
@@ -99,7 +105,7 @@ namespace WebSocketService
 
         public void Dispose()
         {
-            Stop();
+            Task _ = StopAsync();
         }
 
         private async Task AcceptJob(WebSocketContext socketContext)
@@ -136,7 +142,10 @@ namespace WebSocketService
                 finally
                 {
                     _jobRepository.Unregister(job);
-                    JobRemoved?.Invoke(this, new JobEventArgs<TJob>(job, GetActiveJobs()));
+                    JobRemoved?.Invoke(
+                            this,
+                            new JobEventArgs<TJob>(job, GetActiveJobs())
+                        );
                 }
             }
         }
