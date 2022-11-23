@@ -11,31 +11,17 @@ namespace WebSocketService.TestWithWinForm
 
         internal INotifier Notifier { get; set; }
 
-        public override bool Recognize(string message)
+        protected override async Task ExecuteAsync(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
             {
-                return false;
+                return;
             }
 
             Console.WriteLine(message);
             Notifier.Notify(message);
 
-            _message = message;
-
-            return true;
-        }
-
-        public override async Task<JobExecutionStep> Execute()
-        {
             await SendAsync($"Hello! {_message} {Suffix}");
-
-            return JobExecutionStep.WaitNextReceive;
-        }
-
-        public override JobPolicyOnCompletion DeterminePolicyOnCompletion()
-        {
-            return JobPolicyOnCompletion.Termiante;
         }
     }
 }

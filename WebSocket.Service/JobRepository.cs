@@ -3,21 +3,20 @@ using System.Linq;
 
 namespace WebSocketService
 {
-    internal sealed class JobRepository<TJob>
-        where TJob : Job
+    internal sealed class JobRepository
     {
-        private readonly List<TJob> _jobs = new List<TJob>();
+        private readonly List<Job> _jobs = new List<Job>();
         private readonly object _locker = new object();
 
-        public IList<TJob> GetActiveJobs()
+        public IList<Job> GetActiveJobs()
         {
             lock (_locker)
             {
-                return new List<TJob>(_jobs.Where(job => job.IsActive));
+                return new List<Job>(_jobs.Where(job => job.IsSocketChannelOpen));
             }
         }
 
-        public void Register(TJob job)
+        public void Register(Job job)
         {
             lock (_locker)
             {
@@ -25,7 +24,7 @@ namespace WebSocketService
             }
         }
 
-        public void Unregister(TJob job)
+        public void Unregister(Job job)
         {
             lock (_locker)
             {

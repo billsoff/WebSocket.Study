@@ -14,9 +14,9 @@ namespace WebSocketService.Test
             Console.OutputEncoding = Encoding.UTF8;
 
             string address = "http://127.0.0.1:8089/";
-            EchoJobInitializer jobInitializer = new EchoJobInitializer("^_^");
+            JobFactory jobInitializer = new JobFactory("^_^");
 
-            using (WebSocketServer<EchoJob> server = new WebSocketServer<EchoJob>(address, jobInitializer))
+            using (WebSocketServer server = new WebSocketServer(address, jobInitializer))
             {
                 server.Ready += OnServerReady;
                 server.Fault += OnServerFault;
@@ -59,7 +59,7 @@ namespace WebSocketService.Test
 
         private static void OnServerReady(object sender, EventArgs e)
         {
-            Console.WriteLine("Listening at \"{0}\"", ((WebSocketServer<EchoJob>)sender).ListeningAddress);
+            Console.WriteLine("Listening at \"{0}\"", ((WebSocketServer)sender).ListeningAddress);
         }
 
         private static void OnServerStopped(object sender, EventArgs e)
@@ -72,25 +72,25 @@ namespace WebSocketService.Test
             Console.WriteLine("Server startup failed:\r\n{0}", e.Exception);
         }
 
-        private static void OnServerJobCreated(object sender, JobEventArgs<EchoJob> e)
+        private static void OnServerJobCreated(object sender, JobEventArgs e)
         {
             Console.WriteLine("Job created (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
             OutputJobStatus(e.Job);
         }
 
-        private static void OnServerJobRemoved(object sender, JobEventArgs<EchoJob> e)
+        private static void OnServerJobRemoved(object sender, JobEventArgs e)
         {
             Console.WriteLine("Job removed (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
             OutputJobStatus(e.Job);
         }
 
-        private static void OnServerJobTermited(object sender, JobEventArgs<EchoJob> e)
+        private static void OnServerJobTermited(object sender, JobEventArgs e)
         {
             Console.WriteLine("Job terminated (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
             OutputJobStatus(e.Job);
         }
 
-        private static void OnServerJobFault(object sender, JobFaultEventArgs<EchoJob> e)
+        private static void OnServerJobFault(object sender, JobFaultEventArgs e)
         {
             Console.WriteLine(
                     "Job fault (ID: {0}), total active jobs' count: {1}\r\n{2}",

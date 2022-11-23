@@ -1,30 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace WebSocketService
 {
-    public sealed class WebSocketServer<TJob> : IDisposable
-        where TJob : Job, new()
+    public sealed class WebSocketServer : IDisposable
     {
         private readonly HttpListener _listener;
+        private readonly IJobFactory _jobFactory;
 
-        private readonly JobRepository<TJob> _jobRepository = new JobRepository<TJob>();
-        private volatile bool _terminate;
+        private readonly JobRepository _jobRepository = new JobRepository();
 
-        private readonly IJobInitializer<TJob> _jobInitializer;
-
-        public WebSocketServer(string listeningAddress)
-            : this(listeningAddress, null)
+        public WebSocketServer(string listeningAddress, IJobFactory jobFactory)
         {
-        }
-
-        public WebSocketServer(string listeningAddress, IJobInitializer<TJob> jobInitializer)
-        {
-            _jobInitializer = jobInitializer;
+            _jobFactory = jobFactory;
 
             _listener = new HttpListener();
             _listener.Prefixes.Add(listeningAddress);
@@ -37,16 +31,16 @@ namespace WebSocketService
         public event EventHandler Stopping;
         public event EventHandler Stopped;
 
-        public event EventHandler<JobEventArgs<TJob>> JobCreated;
-        public event EventHandler<JobEventArgs<TJob>> JobTermited;
-        public event EventHandler<JobFaultEventArgs<TJob>> JobFault;
-        public event EventHandler<JobEventArgs<TJob>> JobRemoved;
+        public event EventHandler<JobEventArgs> JobCreated;
+        public event EventHandler<JobEventArgs> JobTermited;
+        public event EventHandler<JobFaultEventArgs> JobFault;
+        public event EventHandler<JobEventArgs> JobRemoved;
 
         public string ListeningAddress { get; private set; }
 
         public WebSocketServerState State { get; private set; } = WebSocketServerState.Initial;
 
-        public IList<TJob> GetActiveJobs() => _jobRepository.GetActiveJobs();
+        public IList<Job> GetActiveJobs() => _jobRepository.GetActiveJobs();
 
         public async Task StartAsync()
         {
@@ -68,34 +62,84 @@ namespace WebSocketService
             while (true)
             {
                 HttpListenerContext listenerContext = await _listener.GetContextAsync();
-                WebSocketContext socketContext = await listenerContext.AcceptWebSocketAsync(null);
 
-                if (_terminate)
+                if (!listenerContext.Request.IsWebSocketRequest)
                 {
-                    socketContext.WebSocket.Abort();
+                    RejectInvalidHttpRequest(listenerContext);
 
-                    break;
+                    continue;
                 }
 
-                Task _ = AcceptJob(socketContext);
+                WebSocketContext socketContext = await AcceptWebSocketAsync(listenerContext);
+
+                if (socketContext != null)
+                {
+                    Task _ = AcceptJobAsync(socketContext);
+                }
             }
         }
 
-        public async Task StopAsync()
+        private void RejectInvalidHttpRequest(HttpListenerContext listenerContext)
         {
-            State = WebSocketServerState.Stopping;
-            _terminate = true;
+            listenerContext.Response.StatusCode = 404;
+            listenerContext.Response.Close();
+        }
 
-            Stopping?.Invoke(this, EventArgs.Empty);
+        private async Task<WebSocketContext> AcceptWebSocketAsync(HttpListenerContext listenerContext)
+        {
+            IList<string> protocols = GetProtocols(listenerContext);
 
-            List<Task> tasks = new List<Task>();
-
-            foreach (Job job in GetActiveJobs())
+            if (GetAcceptedProtocol(protocols, out string protocol))
             {
-                tasks.Add(Terminate(job));
+                return await listenerContext.AcceptWebSocketAsync(protocol);
             }
 
-            await Task.WhenAll(tasks.ToArray());
+            WebSocketContext socketContext = await listenerContext.AcceptWebSocketAsync(protocols.FirstOrDefault());
+            await socketContext.WebSocket.CloseAsync(
+                    WebSocketCloseStatus.ProtocolError,
+                    $"None of \"{string.Join(",", socketContext.SecWebSocketProtocols)}\" protocols is supported.",
+                    CancellationToken.None
+                );
+
+            return null;
+        }
+
+        private bool GetAcceptedProtocol(IList<string> protocols, out string protocol)
+        {
+            if (protocols.Count == 0)
+            {
+                protocol = null;
+
+                return _jobFactory.AcceptProtocol(null);
+            }
+
+            protocol = protocols.FirstOrDefault(p => _jobFactory.AcceptProtocol(p));
+
+            return protocol != null;
+        }
+
+        private IList<string> GetProtocols(HttpListenerContext listenerContext)
+        {
+            string values = listenerContext.Request.Headers["Sec-WebSocket-Protocol"]?.Trim();
+
+            if (string.IsNullOrEmpty(values))
+            {
+                return new string[0];
+            }
+
+            return Regex.Split(values, @"\s*,\s*");
+        }
+
+        public void Stop()
+        {
+            if (State != WebSocketServerState.Running)
+            {
+                return;
+            }
+
+            State = WebSocketServerState.Stopping;
+
+            Stopping?.Invoke(this, EventArgs.Empty);
 
             _listener.Stop();
 
@@ -105,10 +149,10 @@ namespace WebSocketService
 
         public void Dispose()
         {
-            Task _ = StopAsync();
+            Stop();
         }
 
-        private async Task AcceptJob(WebSocketContext socketContext)
+        private async Task AcceptJobAsync(WebSocketContext socketContext)
         {
             WebSocket socket = socketContext.WebSocket;
 
@@ -119,23 +163,28 @@ namespace WebSocketService
                     break;
                 }
 
-                TJob job = new TJob
-                {
-                    SocketContext = socketContext,
-                };
+                Job job = _jobFactory.CreateJob(socket.SubProtocol);
 
-                _jobInitializer?.Initialize(job);
+                job.SocketContext = socketContext;
+
                 _jobRepository.Register(job);
 
-                JobCreated?.Invoke(this, new JobEventArgs<TJob>(job, GetActiveJobs()));
+                JobCreated?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
 
                 try
                 {
-                    await RunJob(job);
+                    await RunJobAsync(job);
+
+                    if (!job.PermitSocketChannelReused && job.IsSocketChannelOpen)
+                    {
+                        await TerminateJobAsync(job);
+
+                        break;
+                    }
                 }
                 catch (WebSocketException ex)
                 {
-                    JobFault?.Invoke(this, new JobFaultEventArgs<TJob>(job, GetActiveJobs(), ex));
+                    JobFault?.Invoke(this, new JobFaultEventArgs(job, GetActiveJobs(), ex));
 
                     break;
                 }
@@ -144,25 +193,25 @@ namespace WebSocketService
                     _jobRepository.Unregister(job);
                     JobRemoved?.Invoke(
                             this,
-                            new JobEventArgs<TJob>(job, GetActiveJobs())
+                            new JobEventArgs(job, GetActiveJobs())
                         );
                 }
             }
         }
 
-        private async Task RunJob(TJob job)
+        private async Task RunJobAsync(Job job)
         {
             while (true)
             {
                 await job.Run();
 
-                if (!job.IsActive || !job.IsReusable)
+                if (!job.IsSocketChannelOpen || !job.IsReusable)
                 {
-                    if (!job.IsActive)
+                    if (!job.IsSocketChannelOpen)
                     {
-                        await Terminate(job);
+                        await TerminateJobAsync(job);
 
-                        JobTermited?.Invoke(this, new JobEventArgs<TJob>(job, GetActiveJobs()));
+                        JobTermited?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
                     }
 
                     break;
@@ -170,29 +219,20 @@ namespace WebSocketService
             }
         }
 
-        private async Task Terminate(Job job)
+        private async Task TerminateJobAsync(Job job)
         {
             WebSocket socket = job.Socket;
 
             switch (socket.State)
             {
                 case WebSocketState.Open:
-                    await WaitJobComplete(job);
+                    await socket.CloseAsync(
+                           WebSocketCloseStatus.NormalClosure,
+                           null,
+                           CancellationToken.None
+                       );
 
-                    if (socket.State == WebSocketState.Open)
-                    {
-                        await socket.CloseAsync(
-                               WebSocketCloseStatus.NormalClosure,
-                               null,
-                               CancellationToken.None
-                           );
-                    }
-                    else
-                    {
-                        await Terminate(job);
-                    }
-
-                    return;
+                    break;
 
                 case WebSocketState.CloseReceived:
                     await socket.CloseOutputAsync(
@@ -201,7 +241,7 @@ namespace WebSocketService
                             CancellationToken.None
                         );
 
-                    return;
+                    break;
 
                 case WebSocketState.None:
                 case WebSocketState.Connecting:
@@ -209,27 +249,7 @@ namespace WebSocketService
                 case WebSocketState.Closed:
                 case WebSocketState.Aborted:
                 default:
-                    return;
-            }
-        }
-
-        private async Task WaitJobComplete(Job job)
-        {
-            if (!job.IsActive || job.IsIdle)
-            {
-                return;
-            }
-
-            const int WAIT_MAX_SECONDS = 20;
-
-            for (int i = 0; i < WAIT_MAX_SECONDS; i++)
-            {
-                await Task.Delay(1000); // 1s
-
-                if (!job.IsActive || job.IsIdle)
-                {
-                    return;
-                }
+                    break;
             }
         }
     }

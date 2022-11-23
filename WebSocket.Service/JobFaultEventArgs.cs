@@ -3,10 +3,9 @@ using System.Net.WebSockets;
 
 namespace WebSocketService
 {
-    public sealed class JobFaultEventArgs<TJob> : JobEventArgs<TJob>
-        where TJob : Job
+    public sealed class JobFaultEventArgs : JobEventArgs
     {
-        public JobFaultEventArgs(TJob job, IList<TJob> activeJobs, WebSocketException exception)
+        public JobFaultEventArgs(Job job, IList<Job> activeJobs, WebSocketException exception)
             : base(job, activeJobs)
         {
             Exception = exception;

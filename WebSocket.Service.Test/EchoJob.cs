@@ -5,31 +5,19 @@ namespace WebSocketService.Test
 {
     internal sealed class EchoJob : Job
     {
-        private string _message;
-
         internal string Suffix { get; set; }
 
-        public override bool Recognize(string message)
+        protected override async Task ExecuteAsync(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
             {
-                return false;
+                return;
             }
 
             Console.WriteLine("{0} (from job {1} count: {2:#,##0})", message, Id, message.Length);
-            _message = message;
-
-            return true;
+            await SendAsync($"Hello! {message} {Suffix}");
         }
 
-        public override async Task Execute()
-        {
-            await SendAsync($"Hello! {_message} {Suffix}");
-        }
-
-        public override bool IsReusable
-        {
-            get => true;
-        }
+        public override bool IsReusable => true;
     }
 }

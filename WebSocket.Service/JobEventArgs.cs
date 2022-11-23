@@ -3,17 +3,16 @@ using System.Collections.Generic;
 
 namespace WebSocketService
 {
-    public class JobEventArgs<TJob> : EventArgs
-        where TJob : Job
+    public class JobEventArgs : EventArgs
     {
-        public JobEventArgs(TJob job, IList<TJob> activeJobs)
+        public JobEventArgs(Job job, IList<Job> activeJobs)
         {
             Job = job;
             ActiveJobs = activeJobs;
         }
 
-        public TJob Job { get; private set; }
+        public Job Job { get; private set; }
 
-        public IList<TJob> ActiveJobs { get; private set; }
+        public IList<Job> ActiveJobs { get; private set; }
     }
 }

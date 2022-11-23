@@ -40,12 +40,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IJobInitializer.cs" />
+    <Compile Include="IJobFactory.cs" />
     <Compile Include="Job.cs" />
     <Compile Include="JobEventArgs.cs" />
     <Compile Include="JobExecutionStep.cs" />
     <Compile Include="JobFaultEventArgs.cs" />
-    <Compile Include="JobPolicyOnCompletion.cs" />
     <Compile Include="JobRepository.cs" />
     <Compile Include="WebSocketServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

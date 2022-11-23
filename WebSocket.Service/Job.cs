@@ -26,7 +26,7 @@ namespace WebSocketService
 
         public int Id { get; private set; }
 
-        public bool IsActive { get => Socket.State == WebSocketState.Open; }
+        public bool IsSocketChannelOpen { get => Socket.State == WebSocketState.Open; }
 
         public bool IsIdle { get => ExecutionStep == JobExecutionStep.WaitNextReceive; }
 
@@ -40,34 +40,46 @@ namespace WebSocketService
         {
             ExecutionStep = JobExecutionStep.WaitNextReceive;
 
-            string message = await ReceiveAsync();
+            await PreExecuteAsync();
 
-            if (Socket.State != WebSocketState.Open)
-            {
-                return;
-            }
+            string message = await WaitJobCommand();
 
-            bool recognized = Recognize(message);
-
-            if (!recognized)
+            if (!IsSocketChannelOpen)
             {
                 return;
             }
 
             ExecutionStep = JobExecutionStep.Executing;
 
-            await Execute();
+            await ExecuteAsync(message);
 
             ExecutionStep = JobExecutionStep.Complete;
         }
 
+        private async Task<string> WaitJobCommand()
+        {
+            if (IsExecutedAutomatically)
+            {
+                return null;
+            }
+
+            return await ReceiveAsync();
+        }
+
         #region Job
 
-        public abstract bool Recognize(string message);
+        protected virtual Task PreExecuteAsync()
+        {
+            return Task.FromResult<object>(null);
+        }
 
-        public abstract Task Execute();
+        protected abstract Task ExecuteAsync(string message);
 
-        public abstract bool IsReusable { get; }
+        public virtual bool IsReusable { get; }
+
+        public virtual bool IsExecutedAutomatically { get; }
+
+        public virtual bool PermitSocketChannelReused { get; }
 
         #endregion
 
