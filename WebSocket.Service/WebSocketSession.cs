@@ -28,7 +28,15 @@ namespace WebSocketService
             _ = StartReadAsync();
         }
 
-        public bool IsSessionActive => _socket.State == WebSocketState.Open;
+        public string Protocol => _socket.SubProtocol;
+
+        public bool IsActive => _socket.State == WebSocketState.Open;
+
+        public WebSocketState State => _socket.State;
+
+        public WebSocketCloseStatus? CloseStatus => _socket.CloseStatus;
+
+        public string CloseStatusDescription => _socket.CloseStatusDescription;
 
         public bool HasMessages() => !_messages.IsEmpty;
 
@@ -43,7 +51,7 @@ namespace WebSocketService
                     return message;
                 }
 
-                if (!IsSessionActive || token.IsCancellationRequested)
+                if (!IsActive || token.IsCancellationRequested)
                 {
                     return null;
                 }
@@ -75,19 +83,24 @@ namespace WebSocketService
             }
         }
 
+        public async Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string reason = null)
+        {
+            if (IsActive)
+            {
+                await _socket.CloseAsync(closeStatus, reason, CancellationToken.None);
+            }
+        }
+
         public void Dispose()
         {
-            if (IsSessionActive)
-            {
-                _ = _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
-            }
+            _ = CloseAsync();
         }
 
         #region Helper Methods
 
         private async Task StartReadAsync()
         {
-            while (IsSessionActive)
+            while (IsActive)
             {
                 string message = await ReceiveAsync();
 

@@ -4,6 +4,8 @@
     {
         bool AcceptProtocol(string protocol);
 
-        Job CreateJob(string protocol);
+        int GetJobReceiveMessageBufferSize(string protocol);
+
+        Job CreateJob(IWebSocketSession socketSession);
     }
 }

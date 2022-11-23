@@ -1,19 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 
 namespace WebSocketService
 {
     public interface IWebSocketSession : IDisposable
     {
-        bool IsSessionActive { get; }
+        string Protocol { get; }
+
+        bool IsActive { get; }
+
+        WebSocketState State { get; }
+
+        WebSocketCloseStatus? CloseStatus { get; }
+
+        string CloseStatusDescription { get; }
 
         bool HasMessages();
 
         Task<string> ReadMessageAsync(TimeSpan timeout = default(TimeSpan));
 
         Task<bool> SendMessageAsync(string message);
+
+        Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string reason = null);
     }
 }

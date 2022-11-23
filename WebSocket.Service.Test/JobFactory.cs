@@ -21,9 +21,14 @@
             }
         }
 
-        public Job CreateJob(string protocol)
+        public int GetJobReceiveMessageBufferSize(string protocol)
         {
-            switch (protocol)
+            return 1024;
+        }
+
+        public Job CreateJob(IWebSocketSession socketSession)
+        {
+            switch (socketSession.Protocol)
             {
                 case null:
                 default:

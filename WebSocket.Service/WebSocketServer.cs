@@ -154,20 +154,21 @@ namespace WebSocketService
 
         private async Task AcceptJobAsync(WebSocketContext socketContext)
         {
-            WebSocket socket = socketContext.WebSocket;
-            IWebSocketSession webSocketSession = new WebSocketSession(socket);
+            IWebSocketSession webSocketSession = new WebSocketSession(
+                    socketContext.WebSocket, 
+                    _jobFactory.GetJobReceiveMessageBufferSize(socketContext.WebSocket.SubProtocol)
+                );
 
             while (true)
             {
-                if (socket.State != WebSocketState.Open)
+                if (!webSocketSession.IsActive)
                 {
                     break;
                 }
 
-                Job job = _jobFactory.CreateJob(socket.SubProtocol);
+                Job job = _jobFactory.CreateJob(webSocketSession);
 
                 job.SocketSession = webSocketSession;
-                job.Socket = socket;
 
                 _jobRepository.Register(job);
 
@@ -212,8 +213,6 @@ namespace WebSocketService
                     if (!job.IsSocketSessionActive)
                     {
                         await TerminateJobAsync(job);
-
-                        JobTermited?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
                     }
 
                     break;
@@ -223,36 +222,9 @@ namespace WebSocketService
 
         private async Task TerminateJobAsync(Job job)
         {
-            WebSocket socket = job.Socket;
+            await job.SocketSession.CloseAsync();
 
-            switch (socket.State)
-            {
-                case WebSocketState.Open:
-                    await socket.CloseAsync(
-                           WebSocketCloseStatus.NormalClosure,
-                           null,
-                           CancellationToken.None
-                       );
-
-                    break;
-
-                case WebSocketState.CloseReceived:
-                    await socket.CloseOutputAsync(
-                            WebSocketCloseStatus.NormalClosure,
-                            null,
-                            CancellationToken.None
-                        );
-
-                    break;
-
-                case WebSocketState.None:
-                case WebSocketState.Connecting:
-                case WebSocketState.CloseSent:
-                case WebSocketState.Closed:
-                case WebSocketState.Aborted:
-                default:
-                    break;
-            }
+            JobTermited?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
         }
     }
 }

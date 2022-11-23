@@ -22,15 +22,13 @@ namespace WebSocketService
 
         public int Id { get; private set; }
 
-        public bool IsSocketSessionActive { get => SocketSession.IsSessionActive; }
-
-        public bool IsIdle { get => ExecutionStep != JobExecutionStep.Executing; }
+        public bool IsIdle => ExecutionStep != JobExecutionStep.Executing;
 
         public JobExecutionStep ExecutionStep { get; private set; } = JobExecutionStep.WaitNextReceive;
 
         public IWebSocketSession SocketSession { get; internal set; }
 
-        internal WebSocket Socket { get; set; }
+        public bool IsSocketSessionActive => SocketSession.IsActive;
 
         internal async Task Run()
         {
@@ -40,7 +38,7 @@ namespace WebSocketService
 
             string message = await WaitJobCommand();
 
-            if (!IsSocketSessionActive)
+            if (message == null || !IsSocketSessionActive)
             {
                 return;
             }
