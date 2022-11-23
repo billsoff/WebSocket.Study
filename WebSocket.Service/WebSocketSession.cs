@@ -104,9 +104,13 @@ namespace WebSocketService
             {
                 string message = await ReceiveAsync();
 
-                if (_socket.State == WebSocketState.CloseReceived)
+                if (State == WebSocketState.CloseReceived)
                 {
-                    await _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
+                    await _socket.CloseOutputAsync(
+                            WebSocketCloseStatus.NormalClosure,
+                            null,
+                            CancellationToken.None
+                        );
 
                     break;
                 }
