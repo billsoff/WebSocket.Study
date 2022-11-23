@@ -5,8 +5,6 @@ namespace WebSocketService.TestWithWinForm
 {
     internal sealed class EchoJob : Job
     {
-        private string _message;
-
         internal string Suffix { get; set; }
 
         internal INotifier Notifier { get; set; }
@@ -21,7 +19,9 @@ namespace WebSocketService.TestWithWinForm
             Console.WriteLine(message);
             Notifier.Notify(message);
 
-            await SendAsync($"Hello! {_message} {Suffix}");
+            await SendAsync($"Hello! {message} {Suffix}");
         }
+
+        public override bool IsReusable => true;
     }
 }

@@ -12,7 +12,7 @@ namespace WebSocketService.TestWithWinForm
 {
     public partial class EchoForm : Form, INotifier
     {
-        private WebSocketServer<EchoJob> _server;
+        private WebSocketServer _server;
 
         public EchoForm()
         {
@@ -23,9 +23,9 @@ namespace WebSocketService.TestWithWinForm
         {
             base.OnLoad(e);
 
-            _server = new WebSocketServer<EchoJob>(
+            _server = new WebSocketServer(
                     "http://127.0.0.1:8089/",
-                    new EchoJobInitializer("^_^", this)
+                    new JobFactory("^_^", this)
                 );
             Task _ = _server.StartAsync();
         }
