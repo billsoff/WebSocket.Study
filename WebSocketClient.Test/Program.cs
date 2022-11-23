@@ -18,7 +18,7 @@ namespace WebSocketClient.Test
 
             session.SendMessageAsync("Sweet").Wait();
 
-            string echo = session.ReadMessageAsync().Result;
+            string echo = session.ReceiveMessageAsync().Result;
 
             Console.WriteLine(echo);
 

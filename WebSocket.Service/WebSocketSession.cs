@@ -40,7 +40,7 @@ namespace WebSocketService
 
         public bool HasMessages() => !_messages.IsEmpty;
 
-        public async Task<string> ReadMessageAsync(TimeSpan timeout = default(TimeSpan))
+        public async Task<string> ReceiveMessageAsync(TimeSpan timeout = default(TimeSpan))
         {
             CancellationToken token = timeout > TimeSpan.Zero ? new CancellationTokenSource(timeout).Token : CancellationToken.None;
 

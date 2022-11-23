@@ -57,7 +57,7 @@ namespace WebSocketService
                 return null;
             }
 
-            return await SocketSession.ReadMessageAsync();
+            return await SocketSession.ReceiveMessageAsync();
         }
 
         #region Job

@@ -18,7 +18,7 @@ namespace WebSocketService
 
         bool HasMessages();
 
-        Task<string> ReadMessageAsync(TimeSpan timeout = default(TimeSpan));
+        Task<string> ReceiveMessageAsync(TimeSpan timeout = default(TimeSpan));
 
         Task<bool> SendMessageAsync(string message);
 
