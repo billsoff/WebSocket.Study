@@ -49,5 +49,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WebSocket.Service\WebSocket.Service.csproj">
+      <Project>{291024e5-3fdf-44df-acc8-1c98a82df4a3}</Project>
+      <Name>WebSocket.Service</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

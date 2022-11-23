@@ -155,6 +155,7 @@ namespace WebSocketService
         private async Task AcceptJobAsync(WebSocketContext socketContext)
         {
             WebSocket socket = socketContext.WebSocket;
+            IWebSocketSession webSocketSession = new WebSocketSession(socket);
 
             while (true)
             {
@@ -165,7 +166,8 @@ namespace WebSocketService
 
                 Job job = _jobFactory.CreateJob(socket.SubProtocol);
 
-                job.SocketContext = socketContext;
+                job.SocketSession = webSocketSession;
+                job.Socket = socket;
 
                 _jobRepository.Register(job);
 
@@ -175,7 +177,7 @@ namespace WebSocketService
                 {
                     await RunJobAsync(job);
 
-                    if (!job.PermitSocketChannelReused && job.IsSocketChannelOpen)
+                    if (!job.PermitSocketChannelReused && job.IsSocketSessionActive)
                     {
                         await TerminateJobAsync(job);
 
@@ -205,9 +207,9 @@ namespace WebSocketService
             {
                 await job.Run();
 
-                if (!job.IsSocketChannelOpen || !job.IsReusable)
+                if (!job.IsSocketSessionActive || !job.IsReusable)
                 {
-                    if (!job.IsSocketChannelOpen)
+                    if (!job.IsSocketSessionActive)
                     {
                         await TerminateJobAsync(job);
 

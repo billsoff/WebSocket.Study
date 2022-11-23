@@ -12,7 +12,7 @@ namespace WebSocketService
         {
             lock (_locker)
             {
-                return new List<Job>(_jobs.Where(job => job.IsSocketChannelOpen));
+                return new List<Job>(_jobs.Where(job => job.IsSocketSessionActive));
             }
         }
 

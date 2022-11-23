@@ -6,17 +6,19 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using WebSocketService;
+
 namespace WebSocketClient.Test
 {
     class Program
     {
         static void Main(string[] args)
         {
-            WebSocket socket = CreateSocket().Result;
+            IWebSocketSession session = CreateSocket().Result;
 
-            socket.SendMessageAsync("Sweet").Wait();
+            session.SendMessageAsync("Sweet").Wait();
 
-            string echo = socket.ReadMessageAsync().Result;
+            string echo = session.ReadMessageAsync().Result;
 
             Console.WriteLine(echo);
 
@@ -24,13 +26,13 @@ namespace WebSocketClient.Test
             Console.ReadKey(true);
         }
 
-        private static async Task<ClientWebSocket> CreateSocket()
+        private static async Task<IWebSocketSession> CreateSocket()
         {
             ClientWebSocket socket = new ClientWebSocket();
 
             await socket.ConnectAsync(new Uri("ws://127.0.0.1:8089/"), CancellationToken.None);
 
-            return socket;
+            return new WebSocketSession(socket);
         }
     }
 }

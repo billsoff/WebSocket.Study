@@ -15,7 +15,7 @@ namespace WebSocketService.Test
             }
 
             Console.WriteLine("{0} (from job {1} count: {2:#,##0})", message, Id, message.Length);
-            await SendAsync($"Hello! {message} {Suffix}");
+            await SocketSession.SendMessageAsync($"Hello! {message} {Suffix}");
         }
 
         public override bool IsReusable => true;

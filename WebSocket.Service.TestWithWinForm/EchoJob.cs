@@ -19,7 +19,7 @@ namespace WebSocketService.TestWithWinForm
             Console.WriteLine(message);
             Notifier.Notify(message);
 
-            await SendAsync($"Hello! {message} {Suffix}");
+            await SocketSession.SendMessageAsync($"Hello! {message} {Suffix}");
         }
 
         public override bool IsReusable => true;

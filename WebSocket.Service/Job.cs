@@ -20,21 +20,17 @@ namespace WebSocketService
             Id = Interlocked.Increment(ref _sequence);
         }
 
-        internal WebSocketContext SocketContext { get; set; }
-
-        internal WebSocket Socket { get => SocketContext.WebSocket; }
-
         public int Id { get; private set; }
 
-        public bool IsSocketChannelOpen { get => Socket.State == WebSocketState.Open; }
+        public bool IsSocketSessionActive { get => SocketSession.IsSessionActive; }
 
-        public bool IsIdle { get => ExecutionStep == JobExecutionStep.WaitNextReceive; }
+        public bool IsIdle { get => ExecutionStep != JobExecutionStep.Executing; }
 
         public JobExecutionStep ExecutionStep { get; private set; } = JobExecutionStep.WaitNextReceive;
 
-        public WebSocketState WebSocketState { get => Socket.State; }
+        public IWebSocketSession SocketSession { get; internal set; }
 
-        public WebSocketCloseStatus? WebSocketCloseStatus { get => Socket.CloseStatus; }
+        internal WebSocket Socket { get; set; }
 
         internal async Task Run()
         {
@@ -44,7 +40,7 @@ namespace WebSocketService
 
             string message = await WaitJobCommand();
 
-            if (!IsSocketChannelOpen)
+            if (!IsSocketSessionActive)
             {
                 return;
             }
@@ -63,7 +59,7 @@ namespace WebSocketService
                 return null;
             }
 
-            return await ReceiveAsync();
+            return await SocketSession.ReadMessageAsync();
         }
 
         #region Job
@@ -82,75 +78,5 @@ namespace WebSocketService
         public virtual bool PermitSocketChannelReused { get; }
 
         #endregion
-
-        protected async Task SendAsync(string message)
-        {
-            byte[] data = Encoding.UTF8.GetBytes(message);
-
-            await Socket.SendAsync(
-                    new ArraySegment<byte>(data),
-                    WebSocketMessageType.Text,
-                    endOfMessage: true,
-                    cancellationToken: CancellationToken.None
-                );
-        }
-
-        protected async Task<string> ReceiveAsync()
-        {
-            Decoder decoder = Encoding.UTF8.GetDecoder();
-            StringBuilder buffer = new StringBuilder();
-            WebSocketReceiveResult result;
-
-            do
-            {
-                result = await Socket.ReceiveAsync(_dataBuffer, CancellationToken.None);
-
-                DecodeMessage(
-                        decoder,
-                        _dataBuffer.Array,
-                        result.Count,
-                        result.EndOfMessage,
-                        buffer
-                    );
-            } while (!result.EndOfMessage);
-
-            return buffer.ToString();
-        }
-
-        protected async Task CloseAsync()
-        {
-            await Socket.CloseAsync(
-                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
-                    null,
-                    CancellationToken.None
-                );
-        }
-
-        private void DecodeMessage(Decoder decoder, byte[] data, int byteCount, bool hasNoMoreData, StringBuilder buffer)
-        {
-            int index = 0;
-            int bytesToRead = byteCount;
-
-            while (bytesToRead != 0)
-            {
-                decoder.Convert(
-                    data,
-                    index,
-                    bytesToRead,
-                    _charBuffer,
-                    0,
-                    _charBuffer.Length,
-                    hasNoMoreData,
-                    out int bytesUsed,
-                    out int charsUsed,
-                    out _
-                );
-
-                buffer.Append(_charBuffer, 0, charsUsed);
-
-                index += bytesUsed;
-                bytesToRead -= bytesUsed;
-            }
-        }
     }
 }

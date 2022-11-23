@@ -103,8 +103,7 @@ namespace WebSocketService.Test
 
         private static void OutputJobStatus(Job job)
         {
-            Console.WriteLine("Job (ID: {0}) state: {1}", job.Id, job.WebSocketState);
-            Console.WriteLine("Job (ID: {0}) close status: {1}", job.Id, job.WebSocketCloseStatus);
+            Console.WriteLine("Job (ID: {0}) Is session active: {1}", job.Id, job.IsSocketSessionActive);
         }
 
         private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
