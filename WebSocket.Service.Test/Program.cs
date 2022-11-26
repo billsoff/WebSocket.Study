@@ -22,11 +22,8 @@ namespace WebSocketService.Test
                 server.Fault += OnServerFault;
                 server.Stopped += OnServerStopped;
 
-                server.JobCreated += OnServerJobCreated;
-                server.JobRemoved += OnServerJobRemoved;
-
-                server.JobTermited += OnServerJobTermited;
-                server.JobFault += OnServerJobFault;
+                server.JobStart += OnServerJobStart;
+                server.JobComplete += OnServerJobComplete;
 
                 Task _ = server.StartAsync();
 
@@ -72,35 +69,23 @@ namespace WebSocketService.Test
             Console.WriteLine("Server startup failed:\r\n{0}", e.Exception);
         }
 
-        private static void OnServerJobCreated(object sender, JobEventArgs e)
+        private static void OnServerJobStart(object sender, JobEventArgs e)
         {
-            Console.WriteLine("Job created (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
+            Console.WriteLine("Job start (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
             OutputJobStatus(e.Job);
         }
 
-        private static void OnServerJobRemoved(object sender, JobEventArgs e)
+        private static void OnServerJobComplete(object sender, JobCompleteEventArgs e)
         {
-            Console.WriteLine("Job removed (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
+            Console.WriteLine("Job complete (ID: {0}), total active jobs' count: {1}, success: {2}", e.Job.Id, e.ActiveJobs.Count, e.Success);
+
+            if (!e.Success)
+            {
+                Console.WriteLine(e.Exception);
+            }
+
             OutputJobStatus(e.Job);
         }
-
-        private static void OnServerJobTermited(object sender, JobEventArgs e)
-        {
-            Console.WriteLine("Job terminated (ID: {0}), total active jobs' count: {1}", e.Job.Id, e.ActiveJobs.Count);
-            OutputJobStatus(e.Job);
-        }
-
-        private static void OnServerJobFault(object sender, JobFaultEventArgs e)
-        {
-            Console.WriteLine(
-                    "Job fault (ID: {0}), total active jobs' count: {1}\r\n{2}",
-                    e.Job.Id,
-                    e.ActiveJobs.Count,
-                    e.Exception
-                );
-            OutputJobStatus(e.Job);
-        }
-
         private static void OutputJobStatus(Job job)
         {
             Console.WriteLine("Job (ID: {0}) Is session active: {1}", job.Id, job.IsSocketSessionActive);

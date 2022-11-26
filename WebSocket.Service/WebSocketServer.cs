@@ -31,10 +31,8 @@ namespace WebSocketService
         public event EventHandler Stopping;
         public event EventHandler Stopped;
 
-        public event EventHandler<JobEventArgs> JobCreated;
-        public event EventHandler<JobEventArgs> JobTermited;
-        public event EventHandler<JobFaultEventArgs> JobFault;
-        public event EventHandler<JobEventArgs> JobRemoved;
+        public event EventHandler<JobEventArgs> JobStart;
+        public event EventHandler<JobCompleteEventArgs> JobComplete;
 
         public string ListeningAddress { get; private set; }
 
@@ -176,36 +174,23 @@ namespace WebSocketService
 
             _jobRepository.Register(job);
 
-            JobCreated?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
+            JobStart?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
 
             try
             {
                 await job.ExecuteAsync();
 
-                if (job.IsSocketSessionActive)
-                {
-                    await TerminateJobAsync(job);
-                }
+                JobComplete?.Invoke(this, new JobCompleteEventArgs(job, GetActiveJobs()));
             }
-            catch (WebSocketException ex)
+            catch (Exception ex)
             {
-                JobFault?.Invoke(this, new JobFaultEventArgs(job, GetActiveJobs(), ex));
+                JobComplete?.Invoke(this, new JobCompleteEventArgs(job, GetActiveJobs(), ex));
             }
             finally
             {
                 _jobRepository.Unregister(job);
-                JobRemoved?.Invoke(
-                        this,
-                        new JobEventArgs(job, GetActiveJobs())
-                    );
+                await webSocketSession.CloseAsync();
             }
-        }
-
-        private async Task TerminateJobAsync(Job job)
-        {
-            await job.SocketSession.CloseAsync();
-
-            JobTermited?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
         }
     }
 }

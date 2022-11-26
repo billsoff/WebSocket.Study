@@ -43,8 +43,8 @@
     <Compile Include="IJobFactory.cs" />
     <Compile Include="IWebSocketSession.cs" />
     <Compile Include="Job.cs" />
+    <Compile Include="JobCompleteEventArgs.cs" />
     <Compile Include="JobEventArgs.cs" />
-    <Compile Include="JobFaultEventArgs.cs" />
     <Compile Include="JobRepository.cs" />
     <Compile Include="WebSocketServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
