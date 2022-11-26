@@ -44,6 +44,11 @@ namespace WebSocketService
 
         public async Task StartAsync()
         {
+            if (State != WebSocketServerState.Initial)
+            {
+                throw new InvalidOperationException($"Now the state is {State}, so cannot be started again.");
+            }
+
             try
             {
                 _listener.Start();
