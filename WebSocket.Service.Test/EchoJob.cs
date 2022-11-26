@@ -7,17 +7,22 @@ namespace WebSocketService.Test
     {
         internal string Suffix { get; set; }
 
-        protected override async Task ExecuteAsync(string message)
+        protected override async Task ExecuteAsync()
         {
-            if (string.IsNullOrWhiteSpace(message))
+            string message;
+
+            while (SocketSession.IsActive)
             {
-                return;
+                message = await SocketSession.ReceiveMessageAsync();
+
+                if (string.IsNullOrWhiteSpace(message))
+                {
+                    break;
+                }
+
+                Console.WriteLine("{0} (from job {1} count: {2:#,##0})", message, Id, message.Length);
+                await SocketSession.SendMessageAsync($"Hello! {message} {Suffix}");
             }
-
-            Console.WriteLine("{0} (from job {1} count: {2:#,##0})", message, Id, message.Length);
-            await SocketSession.SendMessageAsync($"Hello! {message} {Suffix}");
         }
-
-        public override bool IsReusable => true;
     }
 }

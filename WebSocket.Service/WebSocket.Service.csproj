@@ -44,7 +44,6 @@
     <Compile Include="IWebSocketSession.cs" />
     <Compile Include="Job.cs" />
     <Compile Include="JobEventArgs.cs" />
-    <Compile Include="JobExecutionStep.cs" />
     <Compile Include="JobFaultEventArgs.cs" />
     <Compile Include="JobRepository.cs" />
     <Compile Include="WebSocketServer.cs" />

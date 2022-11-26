@@ -22,58 +22,13 @@ namespace WebSocketService
 
         public int Id { get; private set; }
 
-        public bool IsIdle => ExecutionStep != JobExecutionStep.Executing;
-
-        public JobExecutionStep ExecutionStep { get; private set; } = JobExecutionStep.WaitNextReceive;
-
         public IWebSocketSession SocketSession { get; internal set; }
 
         public bool IsSocketSessionActive => SocketSession.IsActive;
 
-        internal async Task Run()
-        {
-            ExecutionStep = JobExecutionStep.WaitNextReceive;
-
-            await PreExecuteAsync();
-
-            string message = await WaitJobCommand();
-
-            if (message == null || !IsSocketSessionActive)
-            {
-                return;
-            }
-
-            ExecutionStep = JobExecutionStep.Executing;
-
-            await ExecuteAsync(message);
-
-            ExecutionStep = JobExecutionStep.Complete;
-        }
-
-        private async Task<string> WaitJobCommand()
-        {
-            if (IsExecutedAutomatically)
-            {
-                return null;
-            }
-
-            return await SocketSession.ReceiveMessageAsync();
-        }
-
         #region Job
 
-        protected virtual Task PreExecuteAsync()
-        {
-            return Task.FromResult<object>(null);
-        }
-
-        protected abstract Task ExecuteAsync(string message);
-
-        public virtual bool IsReusable { get; }
-
-        public virtual bool IsExecutedAutomatically { get; }
-
-        public virtual bool PermitSocketChannelReused { get; }
+        internal protected abstract Task ExecuteAsync();
 
         #endregion
     }

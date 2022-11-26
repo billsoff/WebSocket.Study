@@ -9,19 +9,24 @@ namespace WebSocketService.TestWithWinForm
 
         internal INotifier Notifier { get; set; }
 
-        protected override async Task ExecuteAsync(string message)
+        protected override async Task ExecuteAsync()
         {
-            if (string.IsNullOrWhiteSpace(message))
+            string message;
+
+            while (SocketSession.IsActive)
             {
-                return;
+                message = await SocketSession.ReceiveMessageAsync();
+
+                if (string.IsNullOrWhiteSpace(message))
+                {
+                    return;
+                }
+
+                Console.WriteLine(message);
+                Notifier.Notify(message);
+
+                await SocketSession.SendMessageAsync($"Hello! {message} {Suffix}");
             }
-
-            Console.WriteLine(message);
-            Notifier.Notify(message);
-
-            await SocketSession.SendMessageAsync($"Hello! {message} {Suffix}");
         }
-
-        public override bool IsReusable => true;
     }
 }

@@ -154,69 +154,45 @@ namespace WebSocketService
 
         private async Task AcceptJobAsync(WebSocketContext socketContext)
         {
-            IWebSocketSession webSocketSession = new WebSocketSession(
-                    socketContext.WebSocket, 
-                    _jobFactory.GetJobReceiveMessageBufferSize(socketContext.WebSocket.SubProtocol)
+            WebSocket socket = socketContext.WebSocket;
+            WebSocketSession webSocketSession = new WebSocketSession(
+                    socket,
+                    _jobFactory.GetJobReceiveMessageBufferSize(socket.SubProtocol)
                 );
 
-            while (true)
+            if (!webSocketSession.IsActive)
             {
-                if (!webSocketSession.IsActive)
+                return;
+            }
+
+            Job job = _jobFactory.CreateJob(webSocketSession);
+
+            job.SocketSession = webSocketSession;
+
+            _jobRepository.Register(job);
+
+            JobCreated?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
+
+            try
+            {
+                await job.ExecuteAsync();
+
+                if (job.IsSocketSessionActive)
                 {
-                    break;
-                }
-
-                Job job = _jobFactory.CreateJob(webSocketSession);
-
-                job.SocketSession = webSocketSession;
-
-                _jobRepository.Register(job);
-
-                JobCreated?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
-
-                try
-                {
-                    await RunJobAsync(job);
-
-                    if (!job.PermitSocketChannelReused && job.IsSocketSessionActive)
-                    {
-                        await TerminateJobAsync(job);
-
-                        break;
-                    }
-                }
-                catch (WebSocketException ex)
-                {
-                    JobFault?.Invoke(this, new JobFaultEventArgs(job, GetActiveJobs(), ex));
-
-                    break;
-                }
-                finally
-                {
-                    _jobRepository.Unregister(job);
-                    JobRemoved?.Invoke(
-                            this,
-                            new JobEventArgs(job, GetActiveJobs())
-                        );
+                    await TerminateJobAsync(job);
                 }
             }
-        }
-
-        private async Task RunJobAsync(Job job)
-        {
-            while (true)
+            catch (WebSocketException ex)
             {
-                await job.Run();
-
-                if (!job.IsSocketSessionActive || !job.IsReusable)
-                {
-                    if (!job.IsSocketSessionActive)
-                    {
-                        await TerminateJobAsync(job);
-                    }
-
-                    break;
-                }
+                JobFault?.Invoke(this, new JobFaultEventArgs(job, GetActiveJobs(), ex));
+            }
+            finally
+            {
+                _jobRepository.Unregister(job);
+                JobRemoved?.Invoke(
+                        this,
+                        new JobEventArgs(job, GetActiveJobs())
+                    );
             }
         }
 
