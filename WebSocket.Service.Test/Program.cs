@@ -88,7 +88,7 @@ namespace WebSocketService.Test
         }
         private static void OutputJobStatus(Job job)
         {
-            Console.WriteLine("Job (ID: {0}) Is session active: {1}", job.Id, job.IsSocketSessionActive);
+            Console.WriteLine("Job ({0}#{1}) Is session active: {2}", job.Name, job.Id, job.IsSocketSessionActive);
         }
 
         private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)

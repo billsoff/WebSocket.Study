@@ -5,14 +5,13 @@ namespace WebSocketService
 {
     public abstract class Job
     {
-        private static int _sequence;
-
         protected Job()
         {
-            Id = Interlocked.Increment(ref _sequence);
         }
 
-        public int Id { get; private set; }
+        public int Id => SocketSession.Id;
+
+        public string Name => SocketSession.Name;
 
         public IWebSocketSession SocketSession { get; internal set; }
 

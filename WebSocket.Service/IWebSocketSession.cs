@@ -6,6 +6,10 @@ namespace WebSocketService
 {
     public interface IWebSocketSession : IDisposable
     {
+        int Id { get; }
+
+        string Name { get; }
+
         string Protocol { get; }
 
         bool IsActive { get; }

@@ -9,6 +9,7 @@ namespace WebSocketService
 {
     public sealed class WebSocketSession : IWebSocketSession
     {
+        private static int _sequence;
         private const int DEFAULT_BUFFER_SIZE = 1024; // 1KB
 
         private readonly WebSocket _socket;
@@ -17,8 +18,11 @@ namespace WebSocketService
         private readonly ArraySegment<byte> _dataBuffer;
         private readonly char[] _charBuffer;
 
-        public WebSocketSession(WebSocket socket, int bufferSize = DEFAULT_BUFFER_SIZE)
+        public WebSocketSession(WebSocket socket, string name = "", int bufferSize = DEFAULT_BUFFER_SIZE)
         {
+            Id = Interlocked.Increment(ref _sequence);
+            Name = name;
+
             _socket = socket;
 
             _messages = new ConcurrentQueue<string>();
@@ -27,6 +31,10 @@ namespace WebSocketService
 
             _ = StartReadAsync();
         }
+
+        public int Id { get; private set; }
+
+        public string Name { get; private set; }
 
         public string Protocol => _socket.SubProtocol;
 

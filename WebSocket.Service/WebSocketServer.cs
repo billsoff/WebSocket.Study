@@ -160,6 +160,7 @@ namespace WebSocketService
             WebSocket socket = socketContext.WebSocket;
             WebSocketSession webSocketSession = new WebSocketSession(
                     socket,
+                    _jobFactory.GetJobName(socket.SubProtocol),
                     _jobFactory.GetJobReceiveMessageBufferSize(socket.SubProtocol)
                 );
 

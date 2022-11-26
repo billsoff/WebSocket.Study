@@ -22,6 +22,11 @@
             }
         }
 
+        public string GetJobName(string protocol)
+        {
+            return "回响";
+        }
+
         public int GetJobReceiveMessageBufferSize(string protocol)
         {
             return 1024;
