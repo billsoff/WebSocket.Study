@@ -162,7 +162,10 @@ namespace WebSocketService
                     socket,
                     _jobFactory.GetJobName(socket.SubProtocol),
                     _jobFactory.GetJobReceiveMessageBufferSize(socket.SubProtocol)
-                );
+                )
+            {
+                JobRepository = _jobRepository,
+            };
 
             if (!webSocketSession.IsActive)
             {

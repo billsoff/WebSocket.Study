@@ -16,6 +16,11 @@ namespace WebSocketService
             }
         }
 
+        public IEnumerable<IWebSocketSession> GetActiveSocketSessions()
+        {
+            return GetActiveJobs().Select(job => job.SocketSession);
+        }
+
         public void Register(Job job)
         {
             lock (_locker)

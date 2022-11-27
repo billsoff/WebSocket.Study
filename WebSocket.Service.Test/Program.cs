@@ -20,6 +20,7 @@ namespace WebSocketService.Test
             {
                 server.Ready += OnServerReady;
                 server.Fault += OnServerFault;
+                server.Stopping += OnServerStopping;
                 server.Stopped += OnServerStopped;
 
                 server.JobStart += OnServerJobStart;
@@ -57,6 +58,11 @@ namespace WebSocketService.Test
         private static void OnServerReady(object sender, EventArgs e)
         {
             Console.WriteLine("Listening at \"{0}\"", ((WebSocketServer)sender).ListeningAddress);
+        }
+
+        private static void OnServerStopping(object sender, EventArgs e)
+        {
+            Console.WriteLine("Server is stopping.");
         }
 
         private static void OnServerStopped(object sender, EventArgs e)
