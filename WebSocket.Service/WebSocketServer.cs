@@ -78,7 +78,7 @@ namespace WebSocketService
 
                 if (socketContext != null)
                 {
-                    Task _ = AcceptJobAsync(socketContext);
+                    _ = AcceptJobAsync(socketContext);
                 }
             }
         }
