@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 
 namespace WebSocketService
 {
@@ -17,6 +18,8 @@ namespace WebSocketService
         public IBroadcast Broadcast { get; set; }
 
         public bool IsSocketSessionActive => SocketSession.IsActive;
+
+        internal protected CancellationToken ServerStoppingNotifier { get; set; }
 
         #region Job
 

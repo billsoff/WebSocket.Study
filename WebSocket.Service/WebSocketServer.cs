@@ -15,6 +15,7 @@ namespace WebSocketService
         private readonly IJobFactory _jobFactory;
 
         private readonly JobRepository _jobRepository = new JobRepository();
+        private readonly CancellationTokenSource _stoppingNotifier = new CancellationTokenSource();
 
         public WebSocketServer(string listeningAddress, IJobFactory jobFactory)
         {
@@ -133,7 +134,7 @@ namespace WebSocketService
             return Regex.Split(values, @"\s*,\s*");
         }
 
-        public void Stop()
+        public async Task StopAsync()
         {
             if (State != WebSocketServerState.Running)
             {
@@ -144,6 +145,8 @@ namespace WebSocketService
 
             Stopping?.Invoke(this, EventArgs.Empty);
 
+            await NotifySocketSessionServerStopping();
+
             _listener.Stop();
 
             State = WebSocketServerState.Stopped;
@@ -152,7 +155,19 @@ namespace WebSocketService
 
         public void Dispose()
         {
-            Stop();
+            _ = StopAsync();
+        }
+
+        private async Task NotifySocketSessionServerStopping()
+        {
+            _stoppingNotifier.Cancel();
+
+            CancellationToken timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token;
+
+            while (_jobRepository.HasActiveSessions && !timeout.IsCancellationRequested)
+            {
+                await Task.Delay(100);
+            }
         }
 
         private async Task AcceptJobAsync(WebSocketContext socketContext)
@@ -173,6 +188,7 @@ namespace WebSocketService
 
             job.SocketSession = socketSession;
             job.Broadcast = new Broadcast(_jobRepository, socketSession);
+            job.ServerStoppingNotifier = _stoppingNotifier.Token;
 
             _jobRepository.Register(job);
 

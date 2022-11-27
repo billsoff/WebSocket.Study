@@ -8,6 +8,8 @@ namespace WebSocketService
         private readonly List<Job> _jobs = new List<Job>();
         private readonly object _locker = new object();
 
+        public bool HasActiveSessions => _jobs.Count != 0;
+
         public IList<Job> GetActiveJobs()
         {
             lock (_locker)

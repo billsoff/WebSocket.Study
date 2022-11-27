@@ -4,6 +4,8 @@ namespace WebSocketService
 {
     public interface IWebSocketSessionRepository
     {
+        bool HasActiveSessions { get; }
+
         IEnumerable<IWebSocketSession> GetActiveSessions();
     }
 }

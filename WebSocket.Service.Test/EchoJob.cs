@@ -11,13 +11,13 @@ namespace WebSocketService.Test
         {
             string message;
 
-            while (SocketSession.IsActive)
+            while (SocketSession.IsActive && !ServerStoppingNotifier.IsCancellationRequested)
             {
-                message = await SocketSession.ReceiveMessageAsync();
+                message = await SocketSession.ReceiveMessageAsync(TimeSpan.FromSeconds(1));
 
                 if (string.IsNullOrWhiteSpace(message))
                 {
-                    break;
+                    continue;
                 }
 
                 Console.WriteLine("{0} (from job {1} count: {2:#,##0})", message, Id, message.Length);
