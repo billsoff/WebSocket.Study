@@ -179,11 +179,20 @@ namespace WebSocketService
                     _jobFactory.GetJobReceiveMessageBufferSize(socket.SubProtocol)
                 );
 
-            if (!socketSession.IsActive)
-            {
-                return;
-            }
+            Job job = CreateJob(socketSession);
 
+            try
+            {
+                await RunJob(job);
+            }
+            finally
+            {
+                _jobRepository.Unregister(job);
+            }
+        }
+
+        private Job CreateJob(WebSocketSession socketSession)
+        {
             Job job = _jobFactory.CreateJob(socketSession);
 
             job.SocketSession = socketSession;
@@ -194,25 +203,27 @@ namespace WebSocketService
 
             JobStart?.Invoke(this, new JobEventArgs(job, GetActiveJobs()));
 
+            return job;
+        }
+
+        private async Task RunJob(Job job)
+        {
+            Exception exception = null;
+
             try
             {
                 await job.ExecuteAsync();
-                await socketSession.CloseAsync();
-
-                JobComplete?.Invoke(this, new JobCompleteEventArgs(job, GetActiveJobs()));
             }
             catch (Exception ex)
             {
-                await socketSession.CloseAsync();
-
-                JobComplete?.Invoke(this, new JobCompleteEventArgs(job, GetActiveJobs(), ex));
+                exception = ex;
             }
             finally
             {
-                await socketSession.CloseAsync();
-
-                _jobRepository.Unregister(job);
+                await job.SocketSession.CloseAsync();
             }
+
+            JobComplete?.Invoke(this, new JobCompleteEventArgs(job, GetActiveJobs(), exception));
         }
     }
 }
