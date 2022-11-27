@@ -26,8 +26,6 @@ namespace WebSocketService
 
         Task<bool> SendMessageAsync(string message);
 
-        Task BroadcastMessageAsync(string message, bool excludeSelf = false);
-
         Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string reason = null);
     }
 }

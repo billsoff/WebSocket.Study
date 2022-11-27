@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace WebSocketService
 {
-    internal sealed class JobRepository
+    internal sealed class JobRepository : IWebSocketSessionRepository
     {
         private readonly List<Job> _jobs = new List<Job>();
         private readonly object _locker = new object();
@@ -16,7 +16,7 @@ namespace WebSocketService
             }
         }
 
-        public IEnumerable<IWebSocketSession> GetActiveSocketSessions()
+        public IEnumerable<IWebSocketSession> GetActiveSessions()
         {
             return GetActiveJobs().Select(job => job.SocketSession);
         }

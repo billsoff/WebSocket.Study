@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace WebSocketService
 {
@@ -14,6 +13,8 @@ namespace WebSocketService
         public string Name => SocketSession.Name;
 
         public IWebSocketSession SocketSession { get; internal set; }
+
+        public IBroadcast Broadcast { get; set; }
 
         public bool IsSocketSessionActive => SocketSession.IsActive;
 

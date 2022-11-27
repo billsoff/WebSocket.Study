@@ -158,23 +158,21 @@ namespace WebSocketService
         private async Task AcceptJobAsync(WebSocketContext socketContext)
         {
             WebSocket socket = socketContext.WebSocket;
-            WebSocketSession webSocketSession = new WebSocketSession(
+            WebSocketSession socketSession = new WebSocketSession(
                     socket,
                     _jobFactory.GetJobName(socket.SubProtocol),
                     _jobFactory.GetJobReceiveMessageBufferSize(socket.SubProtocol)
-                )
-            {
-                JobRepository = _jobRepository,
-            };
+                );
 
-            if (!webSocketSession.IsActive)
+            if (!socketSession.IsActive)
             {
                 return;
             }
 
-            Job job = _jobFactory.CreateJob(webSocketSession);
+            Job job = _jobFactory.CreateJob(socketSession);
 
-            job.SocketSession = webSocketSession;
+            job.SocketSession = socketSession;
+            job.Broadcast = new Broadcast(_jobRepository, socketSession);
 
             _jobRepository.Register(job);
 
@@ -193,7 +191,7 @@ namespace WebSocketService
             finally
             {
                 _jobRepository.Unregister(job);
-                await webSocketSession.CloseAsync();
+                await socketSession.CloseAsync();
             }
         }
     }

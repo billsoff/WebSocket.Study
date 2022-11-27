@@ -23,7 +23,7 @@ namespace WebSocketService.Test
                 Console.WriteLine("{0} (from job {1} count: {2:#,##0})", message, Id, message.Length);
 
                 await SocketSession.SendMessageAsync($"Hello! {message} {Suffix}");
-                await SocketSession.BroadcastMessageAsync(message, excludeSelf: true);
+                await Broadcast.BroadcastMessageAsync(message, excludeSelf: true);
             }
         }
     }

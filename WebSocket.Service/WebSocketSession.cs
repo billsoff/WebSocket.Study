@@ -50,8 +50,6 @@ namespace WebSocketService
 
         public bool HasMessages() => !_messages.IsEmpty;
 
-        internal JobRepository JobRepository { get; set; }
-
         public async Task<string> ReceiveMessageAsync(TimeSpan timeout = default(TimeSpan))
         {
             CancellationToken token = timeout > TimeSpan.Zero ? new CancellationTokenSource(timeout).Token : CancellationToken.None;
@@ -93,23 +91,6 @@ namespace WebSocketService
 
                 return false;
             }
-        }
-
-        public async Task BroadcastMessageAsync(string message, bool excludeSelf = false)
-        {
-            if (JobRepository == null)
-            {
-                throw new NotImplementedException();
-            }
-
-            IEnumerable<IWebSocketSession> allSessions = JobRepository.GetActiveSocketSessions();
-
-            if (excludeSelf)
-            {
-                allSessions = allSessions.Where(session => session != this);
-            }
-
-            await Task.WhenAll(allSessions.Select(session => session.SendMessageAsync(message)));
         }
 
         public async Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string reason = null)

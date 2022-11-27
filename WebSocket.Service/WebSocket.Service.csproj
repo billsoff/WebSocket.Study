@@ -40,6 +40,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Broadcast.cs" />
+    <Compile Include="IBroadcast.cs" />
+    <Compile Include="IWebSocketSessionRepository.cs" />
     <Compile Include="IJobFactory.cs" />
     <Compile Include="IWebSocketSession.cs" />
     <Compile Include="Job.cs" />
