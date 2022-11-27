@@ -197,17 +197,21 @@ namespace WebSocketService
             try
             {
                 await job.ExecuteAsync();
+                await socketSession.CloseAsync();
 
                 JobComplete?.Invoke(this, new JobCompleteEventArgs(job, GetActiveJobs()));
             }
             catch (Exception ex)
             {
+                await socketSession.CloseAsync();
+
                 JobComplete?.Invoke(this, new JobCompleteEventArgs(job, GetActiveJobs(), ex));
             }
             finally
             {
-                _jobRepository.Unregister(job);
                 await socketSession.CloseAsync();
+
+                _jobRepository.Unregister(job);
             }
         }
     }
